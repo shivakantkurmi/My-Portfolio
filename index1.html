@@ -1,0 +1,3041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SHIVAKANT KURMI — 3D Immortal Cultivation World & Spatial Portfolio</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600;700&family=Noto+Serif+SC:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- GSAP Animation Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <!-- Three.js r160 ES Modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --jade: #38f2d0;
+      --gold: #edc967;
+      --gold-bright: #fff4c2;
+      --crimson: #ff2e4c;
+      --thunder: #b388ff;
+      --cyber-cyan: #00f0ff;
+      --cyber-magenta: #ff0055;
+      --moon-white: #f4f9fd;
+      --text-muted: #b0c7db;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #02050a;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--moon-white);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #webgl-container { position: fixed; inset: 0; z-index: 1; }
+    #css3d-container { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+
+    /* 3D Raycast Hover Tooltip */
+    #world-hover-tooltip {
+      position: fixed;
+      z-index: 50;
+      pointer-events: none;
+      padding: 9px 15px;
+      background: rgba(4, 12, 22, 0.96);
+      border: 1.5px solid var(--gold);
+      box-shadow: 0 0 25px rgba(56, 242, 208, 0.55);
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      color: var(--gold-bright);
+      transform: translate(-50%, -130%);
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      white-space: nowrap;
+    }
+    #world-hover-tooltip.visible { opacity: 1; }
+    #world-hover-tooltip span {
+      display: block;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.66rem;
+      color: var(--jade);
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+
+    /* Loading Gate */
+    #celestial-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: radial-gradient(circle at 50% 50%, #0a1d30 0%, #02050a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    #celestial-loader.vanish { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-bagua {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 2px solid rgba(237, 201, 103, 0.65);
+      box-shadow: 0 0 50px rgba(56, 242, 208, 0.35), inset 0 0 30px rgba(237, 201, 103, 0.3);
+      display: grid;
+      place-items: center;
+      animation: spin 10s linear infinite;
+    }
+    .loader-bagua span {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 2.7rem;
+      color: var(--gold-bright);
+      text-shadow: 0 0 24px var(--gold);
+      animation: spinRev 10s linear infinite;
+    }
+    .loader-text {
+      margin-top: 18px;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 0.32em;
+      font-size: 0.82rem;
+      color: var(--gold-bright);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spinRev { to { transform: rotate(-360deg); } }
+
+    /* ==========================================================================
+       3D SPATIAL STONE & JADE TABLETS (CSS3DObject in 3D World Space)
+       ========================================================================== */
+    .spatial-stele {
+      pointer-events: auto;
+      user-select: none;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(56, 242, 208, 0.18) 0%, transparent 68%),
+        linear-gradient(180deg, rgba(4, 12, 22, 0.96) 0%, rgba(2, 7, 15, 0.98) 100%);
+      border: 2.5px solid rgba(237, 201, 103, 0.85);
+      box-shadow:
+        0 0 50px rgba(0, 0, 0, 0.96),
+        0 0 32px rgba(56, 242, 208, 0.25),
+        inset 0 0 36px rgba(237, 201, 103, 0.14);
+      padding: 34px 40px;
+      position: relative;
+      color: var(--moon-white);
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .spatial-stele:hover {
+      border-color: #ffffff;
+      box-shadow: 0 0 65px rgba(237, 201, 103, 0.55), 0 0 40px rgba(56, 242, 208, 0.4);
+    }
+    .spatial-stele::before, .spatial-stele::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-color: var(--jade);
+      border-style: solid;
+      pointer-events: none;
+      box-shadow: 0 0 10px var(--jade);
+    }
+    .spatial-stele::before { top: 6px; left: 6px; border-width: 3px 0 0 3px; }
+    .spatial-stele::after { bottom: 6px; right: 6px; border-width: 0 3px 3px 0; }
+
+    .stele-zoom-trigger {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      z-index: 5;
+      cursor: pointer;
+      padding: 6px 12px;
+      background: rgba(9, 36, 44, 0.95);
+      border: 1px solid var(--jade);
+      color: var(--jade);
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      transition: all 0.2s ease;
+    }
+    .stele-zoom-trigger:hover {
+      background: var(--jade);
+      color: #020810;
+      box-shadow: 0 0 20px var(--jade);
+    }
+
+    .stele-watermark {
+      position: absolute;
+      right: 22px;
+      bottom: 10px;
+      font-family: 'Noto Serif SC', serif;
+      font-size: 5.2rem;
+      font-weight: 900;
+      color: rgba(237, 201, 103, 0.07);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .stele-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.26em;
+      color: var(--jade);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stele-eyebrow::before { content: "❖"; color: var(--gold); }
+
+    .stele-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-top: 8px;
+      color: var(--gold-bright);
+      text-shadow: 0 4px 20px rgba(237, 201, 103, 0.45);
+    }
+
+    .stele-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    .stele-body {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #dcebf7;
+      margin-top: 14px;
+    }
+
+    .stele-btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .jade-3d-btn {
+      pointer-events: auto;
+      cursor: pointer;
+      padding: 12px 24px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: #030810;
+      background: linear-gradient(135deg, #fff4c2 0%, #dfb244 100%);
+      border: 1.5px solid #ffffff;
+      box-shadow: 0 0 24px rgba(237, 201, 103, 0.55);
+      transition: all 0.22s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .jade-3d-btn:hover {
+      transform: translateZ(12px) scale(1.05);
+      box-shadow: 0 0 40px rgba(255, 244, 194, 0.95);
+    }
+    .jade-3d-btn.secondary {
+      background: rgba(9, 38, 45, 0.95);
+      color: var(--jade);
+      border: 1.5px solid var(--jade);
+      box-shadow: 0 0 20px rgba(56, 242, 208, 0.32);
+    }
+    .jade-3d-btn.secondary:hover {
+      background: var(--jade);
+      color: #020810;
+    }
+
+    .world-beacon-tag {
+      pointer-events: auto;
+      cursor: pointer;
+      padding: 10px 20px;
+      background: rgba(4, 14, 26, 0.94);
+      border: 2px solid var(--gold);
+      border-radius: 40px;
+      box-shadow: 0 0 30px rgba(237, 201, 103, 0.55);
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: var(--gold-bright);
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+    .world-beacon-tag:hover {
+      transform: scale(1.14);
+      background: var(--gold);
+      color: #02060d;
+    }
+
+    .seal-monolith { width: 310px; text-align: center; padding: 24px 20px; cursor: pointer; }
+    .seal-kanji-coin {
+      width: 64px; height: 64px; margin: 0 auto 10px;
+      border-radius: 50%; border: 2px solid var(--gold);
+      display: grid; place-items: center;
+      font-family: 'Noto Serif SC', serif; font-size: 1.9rem; color: var(--gold-bright);
+      background: radial-gradient(circle, rgba(237, 201, 103, 0.28) 0%, rgba(5, 14, 24, 0.95) 100%);
+    }
+    .seal-number { font-family: 'Cinzel Decorative', serif; font-size: 2.2rem; color: #fff; font-weight: 700; }
+    .seal-label { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.18em; color: var(--gold); margin-top: 4px; }
+    .seal-sub { font-size: 0.85rem; color: var(--jade); margin-top: 3px; }
+
+    .talisman-slip {
+      pointer-events: auto;
+      cursor: pointer;
+      width: 295px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, rgba(6, 22, 34, 0.96) 0%, rgba(3, 10, 19, 0.98) 100%);
+      border: 2px solid rgba(56, 242, 208, 0.78);
+      box-shadow: 0 0 28px rgba(56, 242, 208, 0.32);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: all 0.22s ease;
+    }
+    .talisman-slip:hover, .talisman-slip.active {
+      border-color: #ffffff;
+      background: linear-gradient(135deg, rgba(26, 72, 64, 0.99) 0%, rgba(12, 32, 48, 0.99) 100%);
+      box-shadow: 0 0 45px rgba(237, 201, 103, 0.85);
+      transform: scale(1.1);
+    }
+    .talisman-rune {
+      width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--gold);
+      display: grid; place-items: center;
+      font-family: 'Noto Serif SC', serif; font-size: 1.45rem; font-weight: 700;
+      color: var(--gold-bright); background: rgba(237, 201, 103, 0.18); flex-shrink: 0;
+    }
+    .talisman-name { font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700; color: #ffffff; display: block; }
+    .talisman-cat { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.14em; color: var(--jade); text-transform: uppercase; }
+
+    .filter-pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .filter-pill {
+      cursor: pointer; padding: 8px 15px;
+      font-family: 'Cinzel', serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.13em;
+      background: rgba(9, 24, 38, 0.95); border: 1.5px solid rgba(237, 201, 103, 0.5); color: var(--moon-white);
+      transition: all 0.2s;
+    }
+    .filter-pill.active, .filter-pill:hover {
+      border-color: var(--jade); color: #020810; background: var(--jade);
+    }
+
+    .artifact-pedestal-stele { width: 520px; padding: 30px 34px; cursor: pointer; }
+    .artifact-pedestal-stele.nexion-special { border-color: var(--cyber-cyan); }
+    .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .tech-chip {
+      padding: 5px 12px; font-size: 0.8rem; font-weight: 600;
+      border: 1px solid rgba(56, 242, 208, 0.65); background: rgba(56, 242, 208, 0.16); color: #ffffff;
+    }
+
+    .cyber-3d-terminal {
+      pointer-events: auto; cursor: pointer;
+      background: rgba(3, 11, 24, 0.96);
+      border: 2.5px solid var(--cyber-cyan);
+      box-shadow: 0 0 45px rgba(0, 240, 255, 0.4);
+      padding: 28px 32px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--moon-white);
+      position: relative;
+    }
+    .cyber-3d-terminal.magenta-mode {
+      border-color: var(--cyber-magenta);
+      box-shadow: 0 0 50px rgba(255, 0, 85, 0.5);
+    }
+
+    .celestial-input {
+      width: 100%; padding: 12px 15px; margin: 5px 0 12px;
+      background: rgba(3, 9, 18, 0.96); border: 1.5px solid rgba(237, 201, 103, 0.6);
+      color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.98rem; outline: none;
+    }
+
+    /* ==========================================================================
+       DIEGETIC 3D HUD, DEITY TELEPORT BAR, ZOOM DOCK & LIGHTING STUDIO
+       ========================================================================== */
+    #diegetic-3d-hud { position: fixed; inset: 0; z-index: 20; pointer-events: none; perspective: 1100px; }
+
+    .hud-top-plaque {
+      position: absolute; top: 12px; left: 50%;
+      transform: translateX(-50%) rotateX(-10deg);
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 16px;
+      padding: 9px 20px;
+      background: linear-gradient(180deg, rgba(6, 16, 28, 0.96) 0%, rgba(4, 10, 18, 0.92) 100%);
+      border: 1.5px solid rgba(237, 201, 103, 0.75);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.88);
+    }
+    .plaque-crest { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .plaque-seal {
+      width: 32px; height: 32px; border: 1.5px solid var(--gold);
+      display: grid; place-items: center; font-family: 'Noto Serif SC', serif;
+      color: var(--gold-bright); background: rgba(237, 201, 103, 0.18); transform: rotate(45deg);
+    }
+    .plaque-seal span { transform: rotate(-45deg); }
+    .plaque-name { font-family: 'Cinzel', serif; font-size: 0.86rem; letter-spacing: 0.16em; color: #fff; font-weight: 700; }
+    .plaque-realm-status {
+      font-size: 0.68rem; letter-spacing: 0.14em; color: var(--jade);
+      font-family: 'Cinzel', serif; border-left: 1px solid rgba(237, 201, 103, 0.35); padding-left: 14px;
+    }
+    .plaque-actions { display: flex; gap: 8px; }
+    .astrolabe-util-btn {
+      cursor: pointer; padding: 6px 11px; font-family: 'Cinzel', serif;
+      font-size: 0.66rem; font-weight: 700; letter-spacing: 0.12em;
+      background: rgba(10, 26, 38, 0.95); border: 1px solid var(--gold); color: var(--gold-bright);
+      transition: all 0.2s;
+    }
+    .astrolabe-util-btn:hover, .astrolabe-util-btn.active { background: var(--gold); color: #02060d; }
+
+    /* Secondary Bar: Direct Close-Up Teleport to the Human Immortal Deities */
+    .hud-deity-bar {
+      position: absolute; top: 68px; left: 50%;
+      transform: translateX(-50%) rotateX(-8deg);
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      background: rgba(4, 11, 20, 0.94);
+      border: 1.5px solid rgba(237, 201, 103, 0.6);
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 242, 208, 0.25);
+    }
+    .deity-bar-label {
+      font-family: 'Cinzel', serif; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.16em;
+      color: var(--gold-bright); margin-right: 4px;
+    }
+    .deity-jump-pill {
+      cursor: pointer; padding: 5px 11px; border-radius: 20px;
+      background: rgba(12, 30, 44, 0.95); border: 1px solid rgba(56, 242, 208, 0.5);
+      color: var(--moon-white); font-family: 'Cinzel', serif; font-size: 0.64rem;
+      font-weight: 700; letter-spacing: 0.1em; transition: all 0.2s;
+    }
+    .deity-jump-pill:hover {
+      border-color: var(--gold-bright); background: var(--gold); color: #02060d;
+      box-shadow: 0 0 16px var(--gold);
+    }
+
+    /* Left 3D Optical Zoom & Focus Dock */
+    .hud-zoom-dock {
+      position: absolute; left: 18px; top: 50%;
+      transform: translateY(-50%) rotateY(14deg);
+      pointer-events: auto;
+      background: rgba(4, 12, 22, 0.94);
+      border: 1.5px solid rgba(237, 201, 103, 0.68);
+      padding: 12px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 9px;
+    }
+    .zoom-dock-title { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.16em; color: var(--gold); }
+    .zoom-icon-btn {
+      width: 40px; height: 40px; cursor: pointer;
+      background: rgba(10, 30, 44, 0.95); border: 1px solid var(--jade);
+      color: var(--moon-white); font-size: 1.1rem; font-weight: 700;
+      display: grid; place-items: center; transition: all 0.2s;
+    }
+    .zoom-icon-btn:hover { background: var(--jade); color: #020810; box-shadow: 0 0 16px var(--jade); }
+
+    /* Celestial Lighting Studio Drawer */
+    #lighting-studio-panel {
+      position: absolute; top: 112px; right: 20px; width: 335px;
+      transform: rotateY(-12deg) translateX(400px);
+      pointer-events: auto;
+      background: linear-gradient(180deg, rgba(5, 14, 26, 0.97) 0%, rgba(3, 8, 16, 0.99) 100%);
+      border: 2px solid var(--gold);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95);
+      padding: 18px 20px;
+      opacity: 0; visibility: hidden;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #lighting-studio-panel.open { transform: rotateY(-12deg) translateX(0); opacity: 1; visibility: visible; }
+    .studio-header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(237, 201, 103, 0.35); padding-bottom: 8px; margin-bottom: 12px;
+    }
+    .studio-title { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.16em; color: var(--gold-bright); }
+    .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .preset-chip {
+      cursor: pointer; padding: 7px 8px; font-family: 'Cinzel', serif;
+      font-size: 0.64rem; font-weight: 600; letter-spacing: 0.08em;
+      background: rgba(10, 26, 40, 0.92); border: 1px solid rgba(237, 201, 103, 0.4); color: var(--moon-white);
+    }
+    .preset-chip:hover, .preset-chip.active { border-color: var(--jade); background: rgba(56, 242, 208, 0.28); color: #fff; }
+    .slider-row { margin-bottom: 10px; }
+    .slider-label { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--text-muted); margin-bottom: 3px; }
+    .slider-label strong { color: var(--jade); font-family: 'JetBrains Mono', monospace; }
+    .celestial-range { width: 100%; accent-color: var(--gold); cursor: pointer; }
+
+    /* Bottom 3D Compass Dock */
+    .hud-bottom-astrolabe {
+      position: absolute; bottom: 16px; left: 50%;
+      transform: translateX(-50%) rotateX(16deg);
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 7px;
+      padding: 10px 18px;
+      background: radial-gradient(circle at 50% 50%, rgba(56, 242, 208, 0.2) 0%, rgba(4, 10, 18, 0.96) 75%);
+      border: 2px solid rgba(237, 201, 103, 0.72);
+      border-radius: 60px;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.95);
+    }
+    .realm-rune-stone {
+      cursor: pointer; background: rgba(7, 18, 30, 0.92);
+      border: 1px solid rgba(237, 201, 103, 0.4); border-radius: 36px;
+      padding: 8px 15px; color: var(--text-muted);
+      display: flex; flex-direction: column; align-items: center;
+      transition: all 0.22s ease;
+    }
+    .realm-rune-stone .r-title { font-family: 'Cinzel', serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.13em; color: var(--moon-white); }
+    .realm-rune-stone .r-sub { font-size: 0.55rem; letter-spacing: 0.1em; color: var(--jade); text-transform: uppercase; margin-top: 2px; }
+    .realm-rune-stone:hover, .realm-rune-stone.active {
+      border-color: var(--gold-bright);
+      background: linear-gradient(180deg, rgba(237, 201, 103, 0.34) 0%, rgba(12, 36, 44, 0.98) 100%);
+      transform: translateZ(14px) translateY(-3px);
+    }
+
+    @media (max-width: 980px) {
+      .hud-top-plaque { width: 96vw; justify-content: space-between; padding: 8px 12px; }
+      .plaque-realm-status, .hud-deity-bar { display: none; }
+      .hud-bottom-astrolabe { width: 96vw; overflow-x: auto; border-radius: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. LOADING GATE -->
+  <div id="celestial-loader">
+    <div class="loader-bagua"><span>仙</span></div>
+    <div class="loader-text">SCULPTING BIPEDAL HUMAN IMMORTALS & BLAZING QI AURAS</div>
+  </div>
+
+  <!-- 2. HOVER TOOLTIP FOR CLICKABLE 3D OBJECTS -->
+  <div id="world-hover-tooltip">
+    <div id="tooltip-title">ANCIENT ROYAL GOD</div>
+    <span id="tooltip-action">CLICK TO FLY & INSPECT IN 3D</span>
+  </div>
+
+  <!-- 3. WEBGL & CSS3D CONTAINERS -->
+  <div id="webgl-container"></div>
+  <div id="css3d-container"></div>
+
+  <!-- 4. DIEGETIC 3D HUD, DEITY TELEPORT BAR, ZOOM DOCK & LIGHTING STUDIO -->
+  <div id="diegetic-3d-hud">
+    <div class="hud-top-plaque">
+      <div class="plaque-crest" onclick="window.flyToRealm('hero')">
+        <div class="plaque-seal"><span>道</span></div>
+        <div class="plaque-name">SHIVAKANT KURMI</div>
+      </div>
+      <div class="plaque-realm-status" id="hud-stance-readout">
+        CLICK ANY 3D TABLET, HUMAN IMMORTAL STATUE, OR MOUNTAIN TO ZOOM IN • SCROLL WHEEL TO MAGNIFY
+      </div>
+      <div class="plaque-actions">
+        <button class="astrolabe-util-btn" id="btn-lighting-studio" onclick="window.toggleLightingStudio()">☀ LIGHTING ARRAY</button>
+        <button class="astrolabe-util-btn" onclick="window.flyToRealm('dao_scroll')">📜 DAO SCROLL</button>
+        <button class="astrolabe-util-btn" id="qi-audio-btn" onclick="window.toggleQiSound()">🔇 QI SOUND</button>
+      </div>
+    </div>
+
+    <!-- Quick-Inspect Bar to Fly Directly to Any of the Human Immortal Statues -->
+    <div class="hud-deity-bar">
+      <span class="deity-bar-label">⚡ INSPECT IMMORTAL STATUES:</span>
+      <button class="deity-jump-pill" onclick="window.focusDeityByKey('protagonist')">🗡 CULTIVATOR (HERO)</button>
+      <button class="deity-jump-pill" onclick="window.focusDeityByKey('royal')">👑 ANCIENT ROYAL GOD</button>
+      <button class="deity-jump-pill" onclick="window.focusDeityByKey('thunder')">⚡ THUNDER IMMORTAL</button>
+      <button class="deity-jump-pill" onclick="window.focusDeityByKey('demon')">🩸 ANCIENT DEMON GOD</button>
+      <button class="deity-jump-pill" onclick="window.focusDeityByKey('sword')">⚔ SWORD IMMORTAL</button>
+      <button class="deity-jump-pill" onclick="window.focusDeityByKey('void')">🌌 VOID SOVEREIGN</button>
+    </div>
+
+    <div class="hud-zoom-dock">
+      <div class="zoom-dock-title">ZOOM</div>
+      <button class="zoom-icon-btn" title="Zoom In Closer" onclick="window.stepCameraZoom(-10)">＋</button>
+      <button class="zoom-icon-btn" title="Zoom Out" onclick="window.stepCameraZoom(14)">－</button>
+      <button class="zoom-icon-btn" title="Close-Up Read Mode on Active Stele" style="font-size:0.85rem;" onclick="window.focusActiveRealmCloseUp()">🔍</button>
+      <button class="zoom-icon-btn" title="Reset Current Realm Camera" style="font-size:0.85rem;" onclick="window.resetCurrentRealmView()">⟲</button>
+    </div>
+
+    <aside id="lighting-studio-panel">
+      <div class="studio-header">
+        <span class="studio-title">☀ CELESTIAL LIGHTING ARRAY</span>
+        <button class="astrolabe-util-btn" style="padding:3px 8px;" onclick="window.toggleLightingStudio()">✕</button>
+      </div>
+      <div class="preset-grid">
+        <button class="preset-chip active" onclick="window.applyLightingPreset('moonlit', this)">🌙 MOONLIT NIGHT</button>
+        <button class="preset-chip" onclick="window.applyLightingPreset('dawn', this)">🌅 GOLDEN DAWN</button>
+        <button class="preset-chip" onclick="window.applyLightingPreset('crimson', this)">🩸 BLOOD TRIBULATION</button>
+        <button class="preset-chip" onclick="window.applyLightingPreset('jade', this)">🐉 JADE NIRVANA</button>
+        <button class="preset-chip" style="grid-column: span 2; border-color:var(--jade);" onclick="window.applyLightingPreset('reading', this)">📖 HIGH-CLARITY TEXT READING MODE</button>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Moon / Sun Orbit Angle</span><strong id="val-orbit">45°</strong></div>
+        <input type="range" class="celestial-range" id="sl-orbit" min="0" max="360" value="45" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Heavenly Illumination</span><strong id="val-exposure">3.0</strong></div>
+        <input type="range" class="celestial-range" id="sl-exposure" min="0.5" max="5.0" step="0.1" value="3.0" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Immortal Aura Bloom Glow</span><strong id="val-bloom">0.68</strong></div>
+        <input type="range" class="celestial-range" id="sl-bloom" min="0.0" max="1.8" step="0.05" value="0.68" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Sanctuary Lamp Intensity</span><strong id="val-lamps">5.4</strong></div>
+        <input type="range" class="celestial-range" id="sl-lamps" min="0.5" max="9.0" step="0.2" value="5.4" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Cloud Sea Mist Density</span><strong id="val-fog">1.0</strong></div>
+        <input type="range" class="celestial-range" id="sl-fog" min="0.0" max="3.5" step="0.1" value="1.0" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row" style="margin-bottom:0;">
+        <div class="slider-label"><span>Optical Telephoto Lens (FOV)</span><strong id="val-fov">46°</strong></div>
+        <input type="range" class="celestial-range" id="sl-fov" min="20" max="68" step="1" value="46" oninput="window.updateLightingSliders()" />
+      </div>
+    </aside>
+
+    <div class="hud-bottom-astrolabe">
+      <button class="realm-rune-stone active" data-realm="hero" onclick="window.flyToRealm('hero')">
+        <span class="r-title">REALM</span><span class="r-sub">Sanctuary</span>
+      </button>
+      <button class="realm-rune-stone" data-realm="origin" onclick="window.flyToRealm('origin')">
+        <span class="r-title">01 — ORIGIN</span><span class="r-sub">About Me</span>
+      </button>
+      <button class="realm-rune-stone" data-realm="cultivation" onclick="window.flyToRealm('cultivation')">
+        <span class="r-title">02 — CULTIVATION</span><span class="r-sub">23 Skills</span>
+      </button>
+      <button class="realm-rune-stone" data-realm="artifacts" onclick="window.flyToRealm('artifacts')">
+        <span class="r-title">03 — ARTIFACTS</span><span class="r-sub">6 Projects</span>
+      </button>
+      <button class="realm-rune-stone" data-realm="nexion" onclick="window.flyToRealm('nexion')">
+        <span class="r-title">NEX//ION</span><span class="r-sub">Cyber Realm</span>
+      </button>
+      <button class="realm-rune-stone" data-realm="ascension" onclick="window.flyToRealm('ascension')">
+        <span class="r-title">04 — ASCENSION</span><span class="r-sub">Experience</span>
+      </button>
+      <button class="realm-rune-stone" data-realm="contact" onclick="window.flyToRealm('contact')">
+        <span class="r-title">05 — CONTACT</span><span class="r-sub">Celestial Gate</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       5. MASTER 3D ENGINE: BIPEDAL HUMAN IMMORTAL SCULPTOR, AURAS & SPATIAL UI
+       ========================================================================== -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+
+    /*************************************************************************
+     * PORTFOLIO DATA (SHIVAKANT KURMI)
+     *************************************************************************/
+    const SKILLS_LIST = [
+      { name: "C++", cat: "PROGRAMMING", glyph: "剑", desc: "High-performance memory management, STL algorithms, and 900+ competitive programming trials conquered.", app: "Competitive Programming & Core Engines" },
+      { name: "Python", cat: "PROGRAMMING", glyph: "灵", desc: "Primary language for Generative AI pipelines, RAG vector indexing, FAISS search, and ML automation.", app: "EduMentor AI & AI Expense Tracker" },
+      { name: "Java", cat: "PROGRAMMING", glyph: "印", desc: "Object-oriented system design, multi-threaded backend architecture, and algorithmic problem solving.", app: "Enterprise Services & DSA" },
+      { name: "JavaScript", cat: "PROGRAMMING", glyph: "雷", desc: "ES6+ asynchronous architecture, interactive 3D WebGL worlds, and full-stack MERN engineering.", app: "My-Campus, Fix-It-Now & 3D Web" },
+      { name: "React", cat: "FULL STACK", glyph: "陣", desc: "Component-driven frontend architecture, state hooks, and high-frame-rate interactive interfaces.", app: "My-Campus, Fix-It-Now, AI Expense Tracker" },
+      { name: "Node.js", cat: "FULL STACK", glyph: "脉", desc: "Non-blocking event-driven backend runtime powering scalable REST APIs and microservices.", app: "CloudFlow, Fix-It-Now, My-Campus" },
+      { name: "Express", cat: "FULL STACK", glyph: "桥", desc: "Modular API routing, JWT security middleware, and distributed service orchestration.", app: "MERN Full-Stack Platforms" },
+      { name: "MongoDB", cat: "FULL STACK", glyph: "藏", desc: "NoSQL document modeling, aggregation pipelines, and high-throughput cloud persistence.", app: "My-Campus, Fix-It-Now, Expense Tracker" },
+      { name: "PostgreSQL", cat: "FULL STACK", glyph: "碑", desc: "ACID-compliant relational database architecture, complex joins, and indexed query tuning.", app: "CloudFlow & Analytical Engines" },
+      { name: "Generative AI", cat: "AI / ML", glyph: "魂", desc: "Large Language Model orchestration, context grounding, and autonomous academic mentorship workflows.", app: "EduMentor AI (Microsoft & AICTE Internship)" },
+      { name: "RAG", cat: "AI / ML", glyph: "溯", desc: "Retrieval-Augmented Generation binding LLM responses to verified syllabus and document embeddings.", app: "EduMentor AI Knowledge Core" },
+      { name: "FAISS", cat: "AI / ML", glyph: "星", desc: "High-speed dense vector similarity search enabling sub-millisecond semantic retrieval.", app: "EduMentor AI Vector Store" },
+      { name: "NLP", cat: "AI / ML", glyph: "语", desc: "Semantic tokenization, intent extraction, and automated text classification pipelines.", app: "EduMentor AI & Expense Categorizer" },
+      { name: "Machine Learning", cat: "AI / ML", glyph: "衍", desc: "Predictive modeling, anomaly detection, and automated financial forecasting algorithms.", app: "AI-Enabled Expense Tracker" },
+      { name: "Unity", cat: "GAME DEVELOPMENT", glyph: "界", desc: "Unity 6 & HDRP 3D world creation, custom shaders, physics controllers, and lighting pipelines.", app: "NEX//ION & Interactive 3D Worlds" },
+      { name: "Vuforia", cat: "GAME DEVELOPMENT", glyph: "幻", desc: "Augmented Reality spatial target tracking and interactive XR real-world overlays.", app: "VIT Bhopal Gaming Technology XR Labs" },
+      { name: "C#", cat: "GAME DEVELOPMENT", glyph: "锋", desc: "Clean gameplay architecture, state machines, coroutines, and Dual-Mode interaction systems.", app: "NEX//ION Gameplay & Puzzle Engine" },
+      { name: "Game Design", cat: "GAME DEVELOPMENT", glyph: "道", desc: "Core gameplay loop architecture, player agency, puzzle progression, and mechanical balance.", app: "NEX//ION Human & CPU Mode Design" },
+      { name: "Level Design", cat: "GAME DEVELOPMENT", glyph: "境", desc: "Spatial pacing, sightline composition, environmental storytelling, and lighting guidance.", app: "NEX//ION Megastructure Sectors" },
+      { name: "AWS", cat: "CLOUD / TOOLS", glyph: "云", desc: "Cloud infrastructure across EC2, S3, Lambda, API Gateway, and DynamoDB serverless stacks.", app: "CloudFlow Serverless Architecture" },
+      { name: "Docker", cat: "CLOUD / TOOLS", glyph: "鼎", desc: "Containerized microservice environments guaranteeing deterministic cloud deployments.", app: "CloudFlow & Backend Pipelines" },
+      { name: "Git", cat: "CLOUD / TOOLS", glyph: "录", desc: "Distributed version control, branching workflows, and collaborative release management.", app: "All Production Repositories" },
+      { name: "REST APIs", cat: "CLOUD / TOOLS", glyph: "通", desc: "Secure, versioned JSON contracts linking web frontends, mobile clients, and AI engines.", app: "Full-Stack & AI Ecosystems" }
+    ];
+
+    const ARTIFACTS_LIST = [
+      {
+        id: "nexion", name: "NEX//ION", subtitle: "Story-Driven Cyberpunk Puzzle Adventure", glyph: "界",
+        desc: "Flagship 3D game forged in Unity 6 (HDRP) & C#. Features a signature Dual-Mode System allowing players to shift seamlessly between physical Human exploration and CPU circuit infiltration.",
+        tech: ["Unity 6", "HDRP", "C#", "Game Design", "Level Design"],
+        github: "https://github.com/ShivakantKurmi", live: "https://portfolio-two-swart-35.vercel.app/", isNexion: true
+      },
+      {
+        id: "edumentor", name: "EduMentor AI", subtitle: "RAG & Generative AI Mentorship Platform", glyph: "魂",
+        desc: "Built during the Microsoft Initiative AI Internship with Edunet Foundation & AICTE. Uses Generative AI, RAG, FAISS vector search, and NLP for personalized student mastery.",
+        tech: ["Python", "Generative AI", "RAG", "FAISS", "NLP"],
+        github: "https://github.com/ShivakantKurmi", live: ""
+      },
+      {
+        id: "mycampus", name: "My-Campus", subtitle: "Unified University Ecosystem Portal", glyph: "陣",
+        desc: "Comprehensive full-stack campus platform uniting academic workflows, interactive student directories, event hubs, and real-time campus announcements.",
+        tech: ["React", "Node.js", "Express", "MongoDB", "REST APIs"],
+        github: "https://github.com/ShivakantKurmi", live: "https://portfolio-two-swart-35.vercel.app/"
+      },
+      {
+        id: "cloudflow", name: "CloudFlow", subtitle: "Cloud-Native Workflow & DevOps Suite", glyph: "云",
+        desc: "Scalable cloud workflow orchestration platform leveraging AWS services, Docker containers, and PostgreSQL for resilient distributed automation.",
+        tech: ["AWS", "Docker", "Node.js", "PostgreSQL", "REST APIs"],
+        github: "https://github.com/ShivakantKurmi", live: ""
+      },
+      {
+        id: "expense", name: "AI-Enabled Expense Tracker", subtitle: "ML Financial Analytics & Smart Budgeting", glyph: "算",
+        desc: "Full-stack financial intelligence platform integrating Machine Learning and NLP to auto-categorize transactions and forecast monthly expenditure.",
+        tech: ["React", "Node.js", "MongoDB", "Python", "Machine Learning"],
+        github: "https://github.com/ShivakantKurmi", live: ""
+      },
+      {
+        id: "fixitnow", name: "Fix-It-Now", subtitle: "Civic & Institutional Grievance Portal", glyph: "印",
+        desc: "End-to-end complaint and maintenance resolution system with live status pipelines, role-based dashboards, and automated verification.",
+        tech: ["React", "Node.js", "Express", "MongoDB", "REST APIs"],
+        github: "https://github.com/ShivakantKurmi", live: ""
+      }
+    ];
+
+    /*************************************************************************
+     * 1. DUAL-RENDERER SETUP + UNIVERSAL WHEEL-ZOOM & ORBIT CONTROLS
+     *************************************************************************/
+    const webglContainer = document.getElementById('webgl-container');
+    const css3dContainer = document.getElementById('css3d-container');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x02060d);
+    scene.fog = new THREE.FogExp2(0x030914, 0.0010);
+
+    const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.5, 2500);
+    camera.position.set(4, 15, 48);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.28;
+    webglContainer.appendChild(renderer.domElement);
+
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.68, 0.5, 0.32
+    );
+    composer.addPass(bloomPass);
+
+    const css3dRenderer = new CSS3DRenderer();
+    css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+    css3dContainer.appendChild(css3dRenderer.domElement);
+
+    const controls = new OrbitControls(camera, document.body);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxDistance = 650;
+    controls.minDistance = 2.5;
+    controls.zoomSpeed = 1.35;
+    controls.target.set(6, 13, 25);
+
+    const xianxiaGroup = new THREE.Group();
+    const nexionGroup = new THREE.Group();
+    scene.add(xianxiaGroup);
+    scene.add(nexionGroup);
+
+    const clickableWorldMeshes = [];
+    const customShaderUniformsList = [];
+    const risingAuraRings = [];
+    const deityRegistry = {};
+
+    /*************************************************************************
+     * 2. HIGH-RESOLUTION PROCEDURAL PBR TEXTURES
+     *************************************************************************/
+    function fract(x) { return x - Math.floor(x); }
+    function hash2(x, y) { return fract(Math.sin(x * 127.1 + y * 311.7) * 43758.5453123); }
+    function smoothNoise(x, y) {
+      const ix = Math.floor(x), iy = Math.floor(y);
+      const fx = x - ix, fy = y - iy;
+      const ux = fx * fx * (3.0 - 2.0 * fx);
+      const uy = fy * fy * (3.0 - 2.0 * fy);
+      const a = hash2(ix, iy), b = hash2(ix + 1, iy);
+      const c = hash2(ix, iy + 1), d = hash2(ix + 1, iy + 1);
+      return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+    }
+    function ridgeFbm(x, y, octaves = 5) {
+      let val = 0, amp = 0.5, freq = 1.0, weight = 1.0;
+      for (let i = 0; i < octaves; i++) {
+        let n = 1.0 - Math.abs(smoothNoise(x * freq, y * freq) * 2.0 - 1.0);
+        n = n * n * weight;
+        weight = Math.min(Math.max(n * 2.0, 0.0), 1.0);
+        val += n * amp;
+        freq *= 2.1;
+        amp *= 0.5;
+      }
+      return val;
+    }
+
+    function createHighResStoneTexture() {
+      const size = 512;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const img = ctx.createImageData(size, size);
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const n = ridgeFbm(x / 60, y / 60, 5);
+          const detail = smoothNoise(x / 10, y / 10) * 0.25;
+          const v = Math.floor(Math.min(255, Math.max(0, (n * 0.8 + detail) * 245)));
+          const idx = (y * size + x) * 4;
+          const isVein = n > 0.72;
+          img.data[idx]     = isVein ? Math.min(255, v * 0.45 + 35) : v * 0.14;
+          img.data[idx + 1] = isVein ? Math.min(255, v * 0.95 + 50) : v * 0.24;
+          img.data[idx + 2] = isVein ? Math.min(255, v * 0.82 + 40) : v * 0.34;
+          img.data[idx + 3] = 255;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(3, 3);
+      return tex;
+    }
+
+    function createBaguaArrayTexture(primaryColor = '#edc967', secondaryColor = '#38f2d0') {
+      const size = 1024;
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      const cx = size / 2, cy = size / 2;
+      ctx.strokeStyle = primaryColor;
+      ctx.fillStyle = primaryColor;
+      ctx.shadowColor = primaryColor;
+      ctx.shadowBlur = 16;
+
+      [480, 465, 410, 395, 310, 298, 200].forEach((r, i) => {
+        ctx.beginPath();
+        ctx.lineWidth = i % 2 === 0 ? 4 : 2;
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      const runes = ['乾','坤','震','巽','坎','离','艮','兑','道','仙','剑','灵','玄','天','尊','域'];
+      ctx.font = 'bold 34px "Noto Serif SC", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < 16; i++) {
+        const ang = (i / 16) * Math.PI * 2;
+        ctx.save();
+        ctx.translate(cx + Math.cos(ang) * 438, cy + Math.sin(ang) * 438);
+        ctx.rotate(ang + Math.PI / 2);
+        ctx.fillText(runes[i], 0, 0);
+        ctx.restore();
+        ctx.beginPath();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = i % 2 === 0 ? primaryColor : secondaryColor;
+        ctx.moveTo(cx + Math.cos(ang) * 200, cy + Math.sin(ang) * 200);
+        ctx.lineTo(cx + Math.cos(ang) * 480, cy + Math.sin(ang) * 480);
+        ctx.stroke();
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    const stonePBRTex = createHighResStoneTexture();
+    const baguaGoldTex = createBaguaArrayTexture('#edc967', '#38f2d0');
+    const baguaCyanTex = createBaguaArrayTexture('#00f0ff', '#ff0055');
+    const baguaThunderTex = createBaguaArrayTexture('#b388ff', '#00f0ff');
+
+    const matHighRock = new THREE.MeshStandardMaterial({
+      map: stonePBRTex, bumpMap: stonePBRTex, bumpScale: 1.8, roughness: 0.7, metalness: 0.22
+    });
+    const matImperialGold = new THREE.MeshStandardMaterial({
+      color: 0xedc967, emissive: 0x7a570d, emissiveIntensity: 0.65, roughness: 0.2, metalness: 0.94
+    });
+    const matImmortalJade = new THREE.MeshStandardMaterial({
+      color: 0x38f2d0, emissive: 0x0f6b5a, emissiveIntensity: 0.85, roughness: 0.16, metalness: 0.55
+    });
+    const matCrimsonAsura = new THREE.MeshStandardMaterial({
+      color: 0xff2e4c, emissive: 0x8a091d, emissiveIntensity: 0.9, roughness: 0.22, metalness: 0.75
+    });
+    const matThunderViolet = new THREE.MeshStandardMaterial({
+      color: 0xb388ff, emissive: 0x4b1fa6, emissiveIntensity: 0.95, roughness: 0.18, metalness: 0.82
+    });
+    const matObsidianStele = new THREE.MeshStandardMaterial({
+      map: stonePBRTex, bumpMap: stonePBRTex, bumpScale: 0.45, color: 0x0a1929, roughness: 0.28, metalness: 0.65
+    });
+
+    /*************************************************************************
+     * 3. UNIVERSAL CAMERA ZOOM-TO-OBJECT / STELE / DEITY HELPER
+     *************************************************************************/
+    window.zoomTo3DNode = function(object3D, distance = 18, yOffset = 0) {
+      const worldPos = new THREE.Vector3();
+      const worldQuat = new THREE.Quaternion();
+      object3D.getWorldPosition(worldPos);
+      object3D.getWorldQuaternion(worldQuat);
+
+      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(worldQuat).normalize();
+      const camDest = worldPos.clone().addScaledVector(forward, distance);
+      camDest.y += yOffset;
+
+      gsap.to(camera.position, {
+        x: camDest.x, y: camDest.y, z: camDest.z, duration: 1.35, ease: "power3.out"
+      });
+      gsap.to(controls.target, {
+        x: worldPos.x, y: worldPos.y + yOffset * 0.65, z: worldPos.z, duration: 1.35, ease: "power3.out"
+      });
+      playQiNote(640);
+    };
+
+    window.focusDeityByKey = function(key) {
+      const entry = deityRegistry[key];
+      if (!entry) return;
+      document.getElementById('hud-stance-readout').textContent = `COMMUNING WITH: ${entry.title} • DRAG TO ORBIT AROUND STATUE`;
+      window.zoomTo3DNode(entry.group, entry.dist, entry.yOff);
+    };
+
+    window.stepCameraZoom = function(deltaDist) {
+      const dir = new THREE.Vector3().subVectors(camera.position, controls.target);
+      const newDist = Math.max(3, Math.min(450, dir.length() + deltaDist));
+      dir.normalize().multiplyScalar(newDist);
+      const newPos = controls.target.clone().add(dir);
+      gsap.to(camera.position, {
+        x: newPos.x, y: newPos.y, z: newPos.z, duration: 0.5, ease: "power2.out"
+      });
+      playQiNote(deltaDist < 0 ? 587 : 440);
+    };
+
+    /*************************************************************************
+     * 4. HELPER: CREATE 3D SPATIAL UI STELE (WITH BUILT-IN ZOOM BUTTON)
+     *************************************************************************/
+    const spatialSteleObjects = [];
+    const steleRegistryById = {};
+
+    function createSpatial3DStele({
+      id = "", htmlContent, widthPx = 700, heightPx = 460,
+      position = new THREE.Vector3(0, 15, 0), rotationY = 0,
+      scale = 0.036, zoomDist = 18, parentGroup = xianxiaGroup,
+      accentMat = matImperialGold, hasHoloRing = true
+    }) {
+      const containerGroup = new THREE.Group();
+      containerGroup.position.copy(position);
+      containerGroup.rotation.y = rotationY;
+      parentGroup.add(containerGroup);
+
+      const steleId = id || ("stele_" + spatialSteleObjects.length);
+      steleRegistryById[steleId] = { group: containerGroup, zoomDist };
+
+      const domElem = document.createElement('div');
+      domElem.style.width = `${widthPx}px`;
+      domElem.innerHTML = htmlContent;
+      const steleRoot = domElem.querySelector('.spatial-stele, .cyber-3d-terminal');
+      if (steleRoot) {
+        const zBtn = document.createElement('button');
+        zBtn.className = 'stele-zoom-trigger';
+        zBtn.innerHTML = '🔍 ZOOM IN';
+        zBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          window.zoomTo3DNode(containerGroup, zoomDist);
+        });
+        steleRoot.appendChild(zBtn);
+      }
+
+      const cssObj = new CSS3DObject(domElem);
+      cssObj.scale.setScalar(scale);
+      containerGroup.add(cssObj);
+
+      const worldW = widthPx * scale;
+      const worldH = heightPx * scale;
+
+      const slabMesh = new THREE.Mesh(new THREE.BoxGeometry(worldW + 1.4, worldH + 1.4, 0.9), matObsidianStele);
+      slabMesh.position.z = -0.65;
+      slabMesh.userData = {
+        clickable: true,
+        title: "3D INSCRIPTION STELE",
+        subtitle: "Click to zoom directly in front of this tablet",
+        onClick: () => window.zoomTo3DNode(containerGroup, zoomDist)
+      };
+      clickableWorldMeshes.push(slabMesh);
+      containerGroup.add(slabMesh);
+
+      const pillarGeo = new THREE.CylinderGeometry(0.45, 0.55, worldH + 3.0, 24);
+      const leftPillar = new THREE.Mesh(pillarGeo, accentMat);
+      leftPillar.position.set(-(worldW / 2 + 0.85), 0, -0.5);
+      const rightPillar = leftPillar.clone();
+      rightPillar.position.x = (worldW / 2 + 0.85);
+      containerGroup.add(leftPillar, rightPillar);
+
+      const beamGeo = new THREE.BoxGeometry(worldW + 3.4, 0.8, 1.35);
+      const topBeam = new THREE.Mesh(beamGeo, accentMat);
+      topBeam.position.set(0, worldH / 2 + 1.05, -0.5);
+      const botBeam = topBeam.clone();
+      botBeam.position.y = -(worldH / 2 + 1.05);
+      containerGroup.add(topBeam, botBeam);
+
+      let haloMesh = null;
+      if (hasHoloRing) {
+        const haloRadius = Math.max(worldW, worldH) * 0.62;
+        haloMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(haloRadius * 2, haloRadius * 2),
+          new THREE.MeshBasicMaterial({
+            map: accentMat === matImperialGold ? baguaGoldTex : baguaCyanTex,
+            transparent: true, opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+          })
+        );
+        haloMesh.position.z = -1.25;
+        containerGroup.add(haloMesh);
+      }
+
+      spatialSteleObjects.push({ containerGroup, cssObj, haloMesh, basePosY: position.y });
+      return containerGroup;
+    }
+
+    /*************************************************************************
+     * 5. CUSTOM GLSL IMMORTAL ROBE BROCADE & BLAZING QI FLAME AURA SHADERS
+     *************************************************************************/
+    function createImmortalSilkShaderMaterial(baseHex, trimHex, auraHex) {
+      const uniforms = {
+        uTime: { value: 0 },
+        uBase: { value: new THREE.Color(baseHex) },
+        uTrim: { value: new THREE.Color(trimHex) },
+        uAura: { value: new THREE.Color(auraHex) }
+      };
+      customShaderUniformsList.push(uniforms);
+
+      return new THREE.ShaderMaterial({
+        uniforms,
+        side: THREE.DoubleSide,
+        vertexShader: `
+          uniform float uTime;
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vViewPos;
+          void main() {
+            vUv = uv;
+            vec3 pos = position;
+            float flutter = smoothstep(0.85, 0.0, uv.y);
+            pos.x += sin(uTime * 2.8 + pos.y * 2.1 + pos.z * 2.0) * 0.11 * flutter;
+            pos.z += cos(uTime * 2.3 + pos.y * 1.7 + pos.x * 2.0) * 0.11 * flutter;
+            vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+            vViewPos = -mv.xyz;
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform vec3 uBase;
+          uniform vec3 uTrim;
+          uniform vec3 uAura;
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vViewPos;
+          void main() {
+            vec3 N = normalize(vNormal);
+            vec3 V = normalize(vViewPos);
+            float fresnel = pow(1.0 - abs(dot(N, V)), 2.0);
+            // Gold/Elemental Embroidered Hem & Vertical Silk Pleat Sheen
+            float edge = smoothstep(0.10, 0.01, vUv.y) + smoothstep(0.08, 0.01, vUv.x) * 0.7 + smoothstep(0.92, 0.99, vUv.x) * 0.7;
+            float folds = sin(vUv.x * 42.0) * 0.045;
+            vec3 col = mix(uBase + folds, uTrim, clamp(edge, 0.0, 1.0));
+            float qiWave = 0.75 + 0.25 * sin(uTime * 3.5 - vUv.y * 10.0);
+            col += uAura * fresnel * 1.45 * qiWave;
+            gl_FragColor = vec4(col, 1.0);
+          }
+        `
+      });
+    }
+
+    function createVolumetricAuraShellMaterial(auraHex) {
+      const uniforms = {
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color(auraHex) }
+      };
+      customShaderUniformsList.push(uniforms);
+
+      return new THREE.ShaderMaterial({
+        uniforms,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        vertexShader: `
+          uniform float uTime;
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vViewPos;
+          void main() {
+            vUv = uv;
+            vec3 pos = position + normal * (0.14 + 0.08 * sin(uTime * 4.5 - position.y * 3.0));
+            vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+            vViewPos = -mv.xyz;
+            vNormal = normalize(normalMatrix * normal);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: `
+          uniform float uTime;
+          uniform vec3 uColor;
+          varying vec2 vUv;
+          varying vec3 vNormal;
+          varying vec3 vViewPos;
+          void main() {
+            float fresnel = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPos))), 1.6);
+            float flame = 0.5 + 0.5 * sin(vUv.y * 22.0 - uTime * 6.5 + sin(vUv.x * 14.0));
+            gl_FragColor = vec4(uColor * 1.65, fresnel * flame * 0.62);
+          }
+        `
+      });
+    }
+
+    /*************************************************************************
+     * 6. TRUE BIPEDAL HUMAN IMMORTAL & SPLIT-PANEL HANFU SCULPTOR (NO PAWNS!)
+     * Every statue has:
+     *  - Two separated human legs (thigh, knee, shin, upturned cloud boots)
+     *  - 4 separate flowing silk robe panels with gaps between them (Front
+     *    Bixi Apron, Left & Right Winged Flared Panels, Trailing Back Cape)
+     *  - Broad V-tapered pectoral chest, narrow waist, Dragon Shoulder Pauldrons
+     *  - Wide outstretched human arms, elbows, forearms, 5-fingered hands &
+     *    open hanging Guangxiu silk sleeves
+     *  - Sculpted face (jaw, nose, brow, lips, glowing eyes, hair ribbons)
+     *  - 4-Layer Blazing Immortal Aura (Shader Flame Shell + 3 Spiraling Qi
+     *    Dragon Ribbons + Rising Spirit Rings + Sacred Mandorla Halo)
+     *************************************************************************/
+    function createHumanWeapon(type = "jade_sword", primaryMat = matImmortalJade, goldMat = matImperialGold) {
+      const wGroup = new THREE.Group();
+      if (type === "jade_sword") {
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, 4.8, 0.04), primaryMat);
+        blade.position.y = 2.5;
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.65, 4), primaryMat);
+        tip.position.y = 5.2;
+        const guard = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.18, 0.24), goldMat);
+        guard.position.y = 0.1;
+        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.95, 12), goldMat);
+        grip.position.y = -0.45;
+        wGroup.add(blade, tip, guard, grip);
+      } else if (type === "imperial_scepter") {
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 6.8, 16), goldMat);
+        shaft.position.y = 2.5;
+        const dragonRing = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.12, 16, 32), goldMat);
+        dragonRing.position.y = 6.1;
+        const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.38, 1), primaryMat);
+        orb.position.y = 6.1;
+        wGroup.add(shaft, dragonRing, orb);
+      } else if (type === "demon_halberd") {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 7.4, 12), goldMat);
+        pole.position.y = 2.8;
+        const spearTip = new THREE.Mesh(new THREE.ConeGeometry(0.24, 1.8, 4), primaryMat);
+        spearTip.position.y = 7.0;
+        const crescent = new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.14, 8, 24, Math.PI * 1.15), primaryMat);
+        crescent.rotation.z = -Math.PI / 2;
+        crescent.position.set(0.3, 5.7, 0);
+        wGroup.add(pole, spearTip, crescent);
+      } else if (type === "thunder_spear") {
+        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 7.0, 12), goldMat);
+        shaft.position.y = 2.7;
+        const centerProng = new THREE.Mesh(new THREE.ConeGeometry(0.20, 1.9, 4), primaryMat);
+        centerProng.position.y = 6.8;
+        const sideFork = new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.10, 8, 24, Math.PI), primaryMat);
+        sideFork.rotation.z = Math.PI;
+        sideFork.position.y = 5.9;
+        wGroup.add(shaft, centerProng, sideFork);
+      }
+      return wGroup;
+    }
+
+    // Helper: Creates a curved, pleated silk robe panel (for split side-skirts, aprons, and open sleeves)
+    function createCurvedSilkPanel(width, height, curveDepth, flareBottom, mat) {
+      const geo = new THREE.PlaneGeometry(width, height, 16, 20);
+      const pos = geo.attributes.position;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        const normY = (height / 2 - v.y) / height; // 0 at top waist/arm, 1 at bottom hem
+        v.x *= (1.0 + normY * flareBottom);
+        const pleat = Math.sin((v.x / width) * Math.PI * 6.0) * 0.05 * normY;
+        const arch = Math.cos((v.x / width) * Math.PI * 0.5) * curveDepth * Math.pow(normY, 1.2);
+        v.z += arch + pleat;
+        pos.setXYZ(i, v.x, v.y - height / 2, v.z);
+      }
+      geo.computeVertexNormals();
+      return new THREE.Mesh(geo, mat);
+    }
+
+    function createTrueHumanImmortal({
+      deityKey = "",
+      name = "Immortal",
+      subtitle = "Click to zoom & commune",
+      pos = new THREE.Vector3(0, 0, 0),
+      scale = 1.0,
+      robeHex = 0x09192b,
+      innerRobeHex = 0x123845,
+      trimHex = 0xedc967,
+      auraHex = 0x38f2d0,
+      trimMat = matImperialGold,
+      glowMat = matImmortalJade,
+      skinColor = 0xf2d8c2,
+      hairColor = 0x080b12,
+      hasBeard = false,
+      posture = "standing",
+      armPose = "hero",
+      headgear = "guan",
+      onClickCallback = null
+    }) {
+      const root = new THREE.Group();
+      root.position.copy(pos);
+      root.scale.setScalar(scale);
+
+      if (deityKey) {
+        deityRegistry[deityKey] = {
+          group: root,
+          title: name,
+          dist: scale * 7.8,
+          yOff: scale * 3.6
+        };
+      }
+
+      const matOuterBrocade = createImmortalSilkShaderMaterial(robeHex, trimHex, auraHex);
+      const matInnerBrocade = createImmortalSilkShaderMaterial(innerRobeHex, trimHex, auraHex);
+      const matAuraShell = createVolumetricAuraShellMaterial(auraHex);
+      const matSkin = new THREE.MeshStandardMaterial({
+        color: skinColor, emissive: auraHex, emissiveIntensity: 0.08, roughness: 0.40
+      });
+      const matHair = new THREE.MeshStandardMaterial({
+        color: hairColor, roughness: 0.28, metalness: 0.35
+      });
+
+      const registerClick = (mesh) => {
+        mesh.userData = {
+          clickable: true,
+          title: name,
+          subtitle: subtitle,
+          onClick: onClickCallback || (() => window.zoomTo3DNode(root, scale * 7.8, scale * 3.6))
+        };
+        clickableWorldMeshes.push(mesh);
+      };
+
+      // =====================================================================
+      // 1. TWO DISTINCT BIPEDAL HUMAN LEGS & SPLIT HANFU ROBE PANELS (NO CONE!)
+      // =====================================================================
+      const lowerBody = new THREE.Group();
+      root.add(lowerBody);
+
+      if (posture === "lotus") {
+        [-1, 1].forEach(side => {
+          const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 1.75, 20), matOuterBrocade);
+          thigh.position.set(side * 0.65, 0.88, 0.32);
+          thigh.rotation.set(0.42, 0, side * -1.22);
+          const knee = new THREE.Mesh(new THREE.SphereGeometry(0.30, 16, 16), matOuterBrocade);
+          knee.position.set(side * 1.28, 0.65, 0.56);
+          lowerBody.add(thigh, knee);
+        });
+        const lapPanel = createCurvedSilkPanel(2.2, 1.2, 0.35, 0.4, matInnerBrocade);
+        lapPanel.position.set(0, 1.15, 0.45);
+        lapPanel.rotation.x = -0.55;
+        registerClick(lapPanel);
+        lowerBody.add(lapPanel);
+      } else {
+        // Two Distinct Human Legs in a Wide Martial/Immortal Stance (Visible gap between legs!)
+        [
+          { side: -1, lx: -0.48, lz: 0.16, angleZ: 0.07, angleX: -0.06 },
+          { side:  1, lx:  0.48, lz: -0.10, angleZ: -0.07, angleX: 0.06 }
+        ].forEach(leg => {
+          const legGroup = new THREE.Group();
+          legGroup.position.set(leg.lx, 0, leg.lz);
+
+          // Cloud Boot with Upturned Golden Toe
+          const bootFoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.30, 0.72), matObsidianStele);
+          bootFoot.position.set(0, 0.15, 0.12);
+          const goldToe = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.38, 12), trimMat);
+          goldToe.rotation.x = Math.PI / 3;
+          goldToe.position.set(0, 0.25, 0.50);
+
+          // Muscular Calf / Shin Guard & Thigh
+          const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.19, 1.45, 20), matInnerBrocade);
+          shin.position.set(0, 0.95, 0);
+          const kneeGuard = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 1), trimMat);
+          kneeGuard.scale.set(1, 1.2, 0.6);
+          kneeGuard.position.set(0, 1.65, 0.16);
+          const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.25, 1.35, 20), matInnerBrocade);
+          thigh.position.set(-leg.side * 0.06, 2.25, 0);
+          thigh.rotation.z = leg.angleZ;
+
+          registerClick(shin);
+          registerClick(thigh);
+          legGroup.add(bootFoot, goldToe, shin, kneeGuard, thigh);
+          lowerBody.add(legGroup);
+        });
+
+        // 4 SEPARATE FLOWING SILK ROBE PANELS (Front Bixi Apron, Left & Right Flared Wings, Back Imperial Train)
+        const frontApron = createCurvedSilkPanel(0.72, 2.65, 0.22, 0.35, matInnerBrocade);
+        frontApron.position.set(0, 2.88, 0.42);
+        frontApron.rotation.x = -0.10;
+        registerClick(frontApron);
+
+        const leftWingSkirt = createCurvedSilkPanel(0.95, 2.78, 0.38, 0.85, matOuterBrocade);
+        leftWingSkirt.position.set(-0.68, 2.88, 0);
+        leftWingSkirt.rotation.y = -Math.PI / 2;
+        leftWingSkirt.rotation.x = -0.24; // Flared outward in wind!
+        registerClick(leftWingSkirt);
+
+        const rightWingSkirt = createCurvedSilkPanel(0.95, 2.78, 0.38, 0.85, matOuterBrocade);
+        rightWingSkirt.position.set(0.68, 2.88, 0);
+        rightWingSkirt.rotation.y = Math.PI / 2;
+        rightWingSkirt.rotation.x = -0.24;
+        registerClick(rightWingSkirt);
+
+        const backImperialCape = createCurvedSilkPanel(1.65, 3.35, -0.45, 0.95, matOuterBrocade);
+        backImperialCape.position.set(0, 4.45, -0.42);
+        backImperialCape.rotation.x = 0.26; // Sweeping royal cape from shoulders to ground!
+        registerClick(backImperialCape);
+
+        lowerBody.add(frontApron, leftWingSkirt, rightWingSkirt, backImperialCape);
+      }
+
+      const torsoBaseY = posture === "lotus" ? 1.05 : 2.88;
+
+      // =====================================================================
+      // 2. HUMAN TORSO: NARROW WAIST, MUSCULAR PECTORALS & DRAGON PAULDRONS
+      // =====================================================================
+      const upperBody = new THREE.Group();
+      upperBody.position.y = torsoBaseY;
+      root.add(upperBody);
+
+      // Ornate Jade & Gold Waist Girdle (Yudai)
+      const waistGirdle = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.58, 0.38, 32), trimMat);
+      waistGirdle.scale.set(1.08, 1.0, 0.62);
+      waistGirdle.position.y = 0.1;
+      const centerBuckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 1), glowMat);
+      centerBuckle.position.set(0, 0.1, 0.42);
+      upperBody.add(waistGirdle, centerBuckle);
+
+      // V-Tapered Human Upper Torso + Sculpted Pectoral Chest Plates
+      const torsoGeo = new THREE.CylinderGeometry(0.94, 0.54, 1.78, 32);
+      const torsoMesh = new THREE.Mesh(torsoGeo, matOuterBrocade);
+      torsoMesh.scale.set(1.18, 1.0, 0.56);
+      torsoMesh.position.y = 1.04;
+      registerClick(torsoMesh);
+
+      const torsoAura = new THREE.Mesh(torsoGeo, matAuraShell);
+      torsoAura.scale.set(1.32, 1.08, 0.70);
+      torsoAura.position.y = 1.04;
+      upperBody.add(torsoMesh, torsoAura);
+
+      // Cross-Collar V-Neck Hanfu Lapels (Jiaoling)
+      const lapelL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.48, 0.14), trimMat);
+      lapelL.position.set(-0.22, 1.18, 0.46);
+      lapelL.rotation.z = -0.38;
+      const lapelR = new THREE.Mesh(new THREE.BoxGeometry(0.20, 1.28, 0.13), glowMat);
+      lapelR.position.set(0.20, 1.12, 0.44);
+      lapelR.rotation.z = 0.38;
+      upperBody.add(lapelL, lapelR);
+
+      // Broad Immortal Dragon Shoulder Pauldrons (Yunjian) Extending Outward
+      [-1, 1].forEach(side => {
+        const deltoid = new THREE.Mesh(new THREE.SphereGeometry(0.46, 24, 20), matOuterBrocade);
+        deltoid.scale.set(1.28, 0.70, 0.88);
+        deltoid.position.set(side * 1.08, 1.78, 0);
+        const wingPauldron = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.85, 6), trimMat);
+        wingPauldron.rotation.z = -side * 1.15;
+        wingPauldron.position.set(side * 1.32, 1.92, 0);
+        upperBody.add(deltoid, wingPauldron);
+      });
+
+      // =====================================================================
+      // 3. WIDE OUTSTRETCHED HUMAN ARMS, 5-FINGERED HANDS & BILLOWING SLEEVES
+      // =====================================================================
+      function buildArticulatedHumanArm({
+        side = 1,
+        shoulderPos = new THREE.Vector3(side * 1.12, 1.72, 0),
+        upperRot = new THREE.Euler(0, 0, -side * 0.55), // Spread wide away from body!
+        forearmRot = new THREE.Euler(-0.65, 0, 0),
+        weaponType = ""
+      }) {
+        const shoulderPivot = new THREE.Group();
+        shoulderPivot.position.copy(shoulderPos);
+        shoulderPivot.rotation.copy(upperRot);
+
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.20, 1.18, 20), matOuterBrocade);
+        upperArm.position.y = -0.58;
+        const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.21, 16, 16), matOuterBrocade);
+        elbow.position.y = -1.16;
+        shoulderPivot.add(upperArm, elbow);
+
+        const elbowPivot = new THREE.Group();
+        elbowPivot.position.y = -1.16;
+        elbowPivot.rotation.copy(forearmRot);
+        shoulderPivot.add(elbowPivot);
+
+        const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.16, 1.12, 20), matInnerBrocade);
+        forearm.position.y = -0.55;
+        const vambrace = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.18, 0.36, 20), trimMat);
+        vambrace.position.y = -0.92;
+        elbowPivot.add(forearm, vambrace);
+
+        // Wide Draped Open Hanfu Great Sleeve (Guangxiu Sheet hanging down under arm)
+        const openSleeveBanner = createCurvedSilkPanel(1.05, 1.85, 0.25, 0.75, matOuterBrocade);
+        openSleeveBanner.position.set(side * 0.08, -0.35, -0.15);
+        openSleeveBanner.rotation.y = side * Math.PI / 2;
+        openSleeveBanner.rotation.x = 0.45;
+        const sleeveAura = createCurvedSilkPanel(1.12, 1.92, 0.28, 0.80, matAuraShell);
+        sleeveAura.position.copy(openSleeveBanner.position);
+        sleeveAura.rotation.copy(openSleeveBanner.rotation);
+        elbowPivot.add(openSleeveBanner, sleeveAura);
+
+        // Sculpted Human Hand with Palm, Thumb & 4 Articulated Fingers
+        const handGroup = new THREE.Group();
+        handGroup.position.y = -1.20;
+        const palm = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.26, 0.10), matSkin);
+        handGroup.add(palm);
+        for (let f = 0; f < 4; f++) {
+          const finger = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.018, 0.22, 8), matSkin);
+          finger.position.set(-0.068 + f * 0.045, -0.21, 0);
+          handGroup.add(finger);
+        }
+        const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.020, 0.16, 8), matSkin);
+        thumb.position.set(side * -0.12, -0.06, 0.05);
+        thumb.rotation.z = side * 0.68;
+        handGroup.add(thumb);
+
+        if (weaponType) {
+          const weapon = createHumanWeapon(weaponType, glowMat, trimMat);
+          weapon.position.set(0, -0.12, 0.14);
+          weapon.rotation.x = Math.PI / 2;
+          handGroup.add(weapon);
+        }
+
+        elbowPivot.add(handGroup);
+        upperBody.add(shoulderPivot);
+        return { shoulderPivot, elbowPivot, handGroup };
+      }
+
+      if (armPose === "emperor") {
+        // ANCIENT ROYAL GOD: Arms spread majestically; Left hand levitating Golden Seal of Heaven, Right hand holding Dragon Scepter
+        const lArm = buildArticulatedHumanArm({
+          side: -1,
+          upperRot: new THREE.Euler(-0.45, 0.35, 0.72),
+          forearmRot: new THREE.Euler(-0.95, -0.25, 0)
+        });
+        const heavenSeal = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.58, 0.58), trimMat);
+        heavenSeal.position.set(0, -0.52, 0.38);
+        lArm.handGroup.add(heavenSeal);
+
+        buildArticulatedHumanArm({
+          side: 1,
+          upperRot: new THREE.Euler(-0.55, -0.25, -0.68),
+          forearmRot: new THREE.Euler(-0.75, 0, 0),
+          weaponType: "imperial_scepter"
+        });
+      } else if (armPose === "thunder_spear") {
+        // THUNDER IMMORTAL: Left arm extended channeling Lightning Orb; Right arm raised high thrusting Thunder Spear
+        const lArm = buildArticulatedHumanArm({
+          side: -1,
+          upperRot: new THREE.Euler(-0.45, 0.35, 0.78),
+          forearmRot: new THREE.Euler(-0.85, -0.3, 0)
+        });
+        const thunderOrb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38, 1), glowMat);
+        thunderOrb.position.set(0, -0.48, 0.28);
+        lArm.handGroup.add(thunderOrb);
+
+        buildArticulatedHumanArm({
+          side: 1,
+          upperRot: new THREE.Euler(-0.20, 0, -2.25),
+          forearmRot: new THREE.Euler(-0.20, 0, -0.15),
+          weaponType: "thunder_spear"
+        });
+      } else if (armPose === "demon_four_arms") {
+        // ANCIENT DEMON GOD: 4 Wide Outstretched Human Arms
+        buildArticulatedHumanArm({
+          side: -1,
+          shoulderPos: new THREE.Vector3(-1.14, 1.88, -0.12),
+          upperRot: new THREE.Euler(-0.20, 0, 1.98),
+          forearmRot: new THREE.Euler(-0.30, 0, 0.25),
+          weaponType: "demon_halberd"
+        });
+        buildArticulatedHumanArm({
+          side: 1,
+          shoulderPos: new THREE.Vector3(1.14, 1.88, -0.12),
+          upperRot: new THREE.Euler(-0.20, 0, -1.98),
+          forearmRot: new THREE.Euler(-0.30, 0, -0.25),
+          weaponType: "demon_halberd"
+        });
+        buildArticulatedHumanArm({
+          side: -1,
+          shoulderPos: new THREE.Vector3(-1.05, 1.35, 0.12),
+          upperRot: new THREE.Euler(-0.45, 0.35, 0.85),
+          forearmRot: new THREE.Euler(-0.95, -0.45, 0)
+        });
+        buildArticulatedHumanArm({
+          side: 1,
+          shoulderPos: new THREE.Vector3(1.05, 1.35, 0.12),
+          upperRot: new THREE.Euler(-0.45, -0.35, -0.85),
+          forearmRot: new THREE.Euler(-0.95, 0.45, 0)
+        });
+      } else if (armPose === "sword_mantra") {
+        buildArticulatedHumanArm({
+          side: -1,
+          upperRot: new THREE.Euler(0.22, 0, 0.72),
+          forearmRot: new THREE.Euler(-0.35, 0, 0)
+        });
+        buildArticulatedHumanArm({
+          side: 1,
+          upperRot: new THREE.Euler(-0.75, -0.45, -0.45),
+          forearmRot: new THREE.Euler(-1.25, 0.55, 0)
+        });
+      } else if (armPose === "lotus_mudra") {
+        buildArticulatedHumanArm({
+          side: -1,
+          upperRot: new THREE.Euler(-0.25, 0.15, 0.55),
+          forearmRot: new THREE.Euler(-0.95, 0.25, 0)
+        });
+        buildArticulatedHumanArm({
+          side: 1,
+          upperRot: new THREE.Euler(-0.25, -0.15, -0.55),
+          forearmRot: new THREE.Euler(-0.95, -0.25, 0)
+        });
+      } else {
+        buildArticulatedHumanArm({
+          side: -1,
+          upperRot: new THREE.Euler(-0.22, 0.1, 0.52),
+          forearmRot: new THREE.Euler(-0.55, 0.2, 0)
+        });
+        const rArm = buildArticulatedHumanArm({
+          side: 1,
+          upperRot: new THREE.Euler(-0.62, -0.2, -0.55),
+          forearmRot: new THREE.Euler(-0.95, 0.1, 0)
+        });
+        const qiSphere = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 1), glowMat);
+        qiSphere.position.set(0, -0.34, 0.16);
+        rArm.handGroup.add(qiSphere);
+      }
+
+      // =====================================================================
+      // 4. SCULPTED HUMAN HEAD, FACE FEATURES, FLOWING HAIR & IMMORTAL CROWNS
+      // =====================================================================
+      const headGroup = new THREE.Group();
+      headGroup.position.y = 2.36;
+      upperBody.add(headGroup);
+
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.24, 0.50, 20), matSkin);
+      neck.position.y = -0.18;
+      headGroup.add(neck);
+
+      const headGeo = new THREE.SphereGeometry(0.41, 32, 32);
+      const hPos = headGeo.attributes.position;
+      const hv = new THREE.Vector3();
+      for (let i = 0; i < hPos.count; i++) {
+        hv.fromBufferAttribute(hPos, i);
+        if (hv.y < 0) {
+          const jawFactor = 1.0 + hv.y * 0.65;
+          hv.x *= Math.max(0.42, jawFactor);
+          hv.z *= Math.max(0.58, jawFactor + 0.12);
+        }
+        hPos.setXYZ(i, hv.x * 0.88, hv.y * 1.12, hv.z * 0.95);
+      }
+      headGeo.computeVertexNormals();
+      const headMesh = new THREE.Mesh(headGeo, matSkin);
+      headMesh.position.y = 0.24;
+      registerClick(headMesh);
+      headGroup.add(headMesh);
+
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(0.058, 0.25, 4), matSkin);
+      nose.position.set(0, 0.22, 0.38);
+      nose.rotation.x = 0.22;
+
+      const browRidge = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.05, 0.12), matHair);
+      browRidge.position.set(0, 0.35, 0.33);
+
+      const foreheadMark = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), glowMat);
+      foreheadMark.scale.set(0.6, 1.6, 0.4);
+      foreheadMark.position.set(0, 0.45, 0.36);
+
+      [-1, 1].forEach(side => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.048, 12, 12), glowMat);
+        eye.scale.set(1.48, 0.65, 0.6);
+        eye.position.set(side * 0.135, 0.27, 0.34);
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 12), matSkin);
+        ear.scale.set(0.4, 1.2, 0.7);
+        ear.position.set(side * 0.36, 0.24, -0.02);
+        headGroup.add(eye, ear);
+      });
+      headGroup.add(nose, browRidge, foreheadMark);
+
+      if (hasBeard) {
+        // Long Flowing Sovereign Beard for the Ancient Royal God
+        const beardCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, -0.05, 0.34),
+          new THREE.Vector3(0, -0.55, 0.38),
+          new THREE.Vector3(0, -1.25, 0.32)
+        ]);
+        headGroup.add(new THREE.Mesh(new THREE.TubeGeometry(beardCurve, 16, 0.075, 8, false), matHair));
+      }
+
+      // Multi-Strand Wind-Swept Xianxia Hair
+      const hairScalp = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), matHair);
+      hairScalp.scale.set(0.92, 1.08, 0.98);
+      hairScalp.position.set(0, 0.29, -0.04);
+      headGroup.add(hairScalp);
+
+      for (let h = -2; h <= 2; h++) {
+        const strandCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(h * 0.10, 0.32, -0.28),
+          new THREE.Vector3(h * 0.18, -0.65, -0.62),
+          new THREE.Vector3(h * 0.26, -1.85, -0.92),
+          new THREE.Vector3(h * 0.34, -3.10, -1.25)
+        ]);
+        headGroup.add(new THREE.Mesh(new THREE.TubeGeometry(strandCurve, 24, 0.09, 8, false), matHair));
+      }
+
+      [-1, 1].forEach(side => {
+        const lockCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.32, 0.34, 0.16),
+          new THREE.Vector3(side * 0.36, -0.20, 0.25),
+          new THREE.Vector3(side * 0.30, -1.05, 0.32)
+        ]);
+        headGroup.add(new THREE.Mesh(new THREE.TubeGeometry(lockCurve, 16, 0.068, 8, false), matHair));
+      });
+
+      if (headgear === "mianliu") {
+        // ANCIENT ROYAL GOD: 12-Strand Beaded Imperial Mianliu Crown
+        const crownBase = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.30, 0.38, 20), trimMat);
+        crownBase.position.y = 0.74;
+        const flatBoard = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.06, 1.28), matObsidianStele);
+        flatBoard.position.set(0, 0.94, 0.04);
+        const boardGoldRim = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.04, 1.32), trimMat);
+        boardGoldRim.position.set(0, 0.94, 0.04);
+        headGroup.add(crownBase, flatBoard, boardGoldRim);
+
+        for (let b = 0; b < 9; b++) {
+          const bx = -0.38 + (b / 8) * 0.76;
+          const frontStrand = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.48, 6), glowMat);
+          frontStrand.position.set(bx, 0.70, 0.65);
+          const backStrand = frontStrand.clone();
+          backStrand.position.z = -0.56;
+          headGroup.add(frontStrand, backStrand);
+        }
+      } else if (headgear === "thunder_crest") {
+        const diadem = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.055, 12, 24, Math.PI), trimMat);
+        diadem.rotation.x = -Math.PI / 3;
+        diadem.position.set(0, 0.66, 0.15);
+        const thunderSpire = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 0), glowMat);
+        thunderSpire.scale.set(0.6, 2.4, 0.4);
+        thunderSpire.position.set(0, 0.96, 0.12);
+        headGroup.add(diadem, thunderSpire);
+      } else if (headgear === "demon_horns") {
+        [-1, 1].forEach(side => {
+          const hornCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.24, 0.56, 0.10),
+            new THREE.Vector3(side * 0.68, 1.08, -0.08),
+            new THREE.Vector3(side * 0.48, 1.78, -0.28)
+          ]);
+          headGroup.add(new THREE.Mesh(new THREE.TubeGeometry(hornCurve, 20, 0.10, 10, false), trimMat));
+        });
+      } else {
+        const topknot = new THREE.Mesh(new THREE.SphereGeometry(0.20, 16, 16), matHair);
+        topknot.scale.set(1, 1.35, 1);
+        topknot.position.y = 0.74;
+        const guanCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.21, 0.38, 20), trimMat);
+        guanCrown.position.y = 0.74;
+        const hairpin = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 1.08, 8), glowMat);
+        hairpin.rotation.z = Math.PI / 2;
+        hairpin.position.y = 0.78;
+        headGroup.add(topknot, guanCrown, hairpin);
+      }
+
+      // =====================================================================
+      // 5. 4-LAYER BLAZING IMMORTAL AURA (PIBO + SPIRAL QI DRAGONS + SPIRIT RINGS)
+      // =====================================================================
+      // Floating Celestial Silk Pibo Sash
+      const piboCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-1.85, -0.2, 0.45),
+        new THREE.Vector3(-1.55, 1.95, 0.20),
+        new THREE.Vector3(0, 3.05, -0.85),
+        new THREE.Vector3(1.55, 1.95, 0.20),
+        new THREE.Vector3(1.85, -0.2, 0.45)
+      ]);
+      upperBody.add(new THREE.Mesh(new THREE.TubeGeometry(piboCurve, 48, 0.10, 12, false), matAuraShell));
+
+      // 3 Spiraling Ascending Qi Aura Ribbons Coiling Around the Human Figure
+      const auraSpiralGroup = new THREE.Group();
+      root.add(auraSpiralGroup);
+      for (let s = 0; s < 3; s++) {
+        const phase = (s / 3) * Math.PI * 2;
+        const pts = [];
+        for (let k = 0; k <= 20; k++) {
+          const t = k / 20;
+          const a = t * Math.PI * 3.2 + phase;
+          const rad = 1.55 + Math.sin(t * Math.PI) * 0.65;
+          pts.push(new THREE.Vector3(Math.cos(a) * rad, t * 6.8, Math.sin(a) * rad));
+        }
+        const spiralCurve = new THREE.CatmullRomCurve3(pts);
+        const spiralMesh = new THREE.Mesh(new THREE.TubeGeometry(spiralCurve, 40, 0.065, 8, false), matAuraShell);
+        auraSpiralGroup.add(spiralMesh);
+      }
+
+      // Rising Spirit Rings
+      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.75, 0.05, 12, 48), glowMat);
+      ring1.rotation.x = Math.PI / 2;
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(2.25, 0.04, 12, 48), trimMat);
+      ring2.rotation.x = Math.PI / 2;
+      root.add(ring1, ring2);
+      risingAuraRings.push({ ring1, ring2, auraSpiralGroup });
+
+      return root;
+    }
+
+    /*************************************************************************
+     * 7. CELESTIAL LIGHTING & VOLUMETRIC CLOUD SEA + INTERACTIVE STUDIO
+     *************************************************************************/
+    const ambientLight = new THREE.AmbientLight(0x2b5280, 2.4);
+    scene.add(ambientLight);
+
+    const moonLight = new THREE.DirectionalLight(0xd8ecff, 3.0);
+    moonLight.position.set(-120, 220, -280);
+    scene.add(moonLight);
+
+    const sanctuaryGoldLight = new THREE.PointLight(0xffcb6b, 5.4, 250);
+    sanctuaryGoldLight.position.set(0, 28, 35);
+    scene.add(sanctuaryGoldLight);
+
+    const jadeSpiritLight = new THREE.PointLight(0x38f2d0, 4.6, 250);
+    jadeSpiritLight.position.set(-30, 25, 10);
+    scene.add(jadeSpiritLight);
+
+    const moonShaderMat = new THREE.ShaderMaterial({
+      uniforms: { uTint: { value: new THREE.Color(0xd8ecff) } },
+      vertexShader: `
+        varying vec2 vUv; varying vec3 vNormal;
+        void main() {
+          vUv = uv; vNormal = normalize(normalMatrix * normal);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uTint; varying vec2 vUv; varying vec3 vNormal;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 p) {
+          vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+          return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+        }
+        float fbm(vec2 p) {
+          float v = 0.0, a = 0.5;
+          for(int i=0; i<5; i++) { v += a * noise(p); p *= 2.1; a *= 0.5; }
+          return v;
+        }
+        void main() {
+          float craters = fbm(vUv * 14.0);
+          vec3 moonBase = mix(uTint * 0.65, vec3(1.0), smoothstep(0.3, 0.7, craters));
+          float rim = pow(1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0), 2.2);
+          gl_FragColor = vec4((moonBase + uTint * rim * 0.9) * 1.3, 1.0);
+        }
+      `
+    });
+    const colossalMoon = new THREE.Mesh(new THREE.SphereGeometry(95, 48, 48), moonShaderMat);
+    colossalMoon.position.set(-110, 165, -520);
+    xianxiaGroup.add(colossalMoon);
+
+    const cloudSeaUniforms = {
+      uTime: { value: 0 },
+      uMistColor: { value: new THREE.Color(0x163648) },
+      uCrestColor: { value: new THREE.Color(0x7898b8) },
+      uQiGlowColor: { value: new THREE.Color(0xedc967) }
+    };
+    const cloudSeaMat = new THREE.ShaderMaterial({
+      uniforms: cloudSeaUniforms, transparent: true, depthWrite: false,
+      vertexShader: `
+        uniform float uTime; varying vec2 vUv; varying float vElev;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float noise(vec2 p) {
+          vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
+          return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+        }
+        float fbm(vec2 p) {
+          float v = 0.0, a = 0.5;
+          for(int i=0; i<5; i++) { v += a * noise(p); p *= 2.02; a *= 0.5; }
+          return v;
+        }
+        void main() {
+          vUv = uv; vec3 pos = position;
+          float n = fbm(pos.xz * 0.008 + vec2(uTime * 0.03, uTime * 0.015));
+          pos.y += n * 24.0; vElev = n;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uMistColor; uniform vec3 uCrestColor; uniform vec3 uQiGlowColor;
+        varying vec2 vUv; varying float vElev;
+        void main() {
+          vec3 abyss = vec3(0.02, 0.06, 0.11);
+          vec3 col = mix(abyss, uMistColor, smoothstep(0.2, 0.55, vElev));
+          col = mix(col, uCrestColor, smoothstep(0.58, 0.85, vElev));
+          col += uQiGlowColor * smoothstep(0.72, 0.92, vElev) * 0.35;
+          float radialFade = 1.0 - smoothstep(0.25, 0.5, length(vUv - 0.5));
+          gl_FragColor = vec4(col, radialFade * 0.88);
+        }
+      `
+    });
+    const cloudSeaMesh = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600, 140, 140), cloudSeaMat);
+    cloudSeaMesh.rotation.x = -Math.PI / 2;
+    cloudSeaMesh.position.y = -24;
+    xianxiaGroup.add(cloudSeaMesh);
+
+    window.toggleLightingStudio = function() {
+      const panel = document.getElementById('lighting-studio-panel');
+      const btn = document.getElementById('btn-lighting-studio');
+      panel.classList.toggle('open');
+      btn.classList.toggle('active', panel.classList.contains('open'));
+      playQiNote(528);
+    };
+
+    window.updateLightingSliders = function() {
+      const orbitDeg = parseFloat(document.getElementById('sl-orbit').value);
+      const exposureVal = parseFloat(document.getElementById('sl-exposure').value);
+      const bloomVal = parseFloat(document.getElementById('sl-bloom').value);
+      const lampsVal = parseFloat(document.getElementById('sl-lamps').value);
+      const fogVal = parseFloat(document.getElementById('sl-fog').value);
+      const fovVal = parseFloat(document.getElementById('sl-fov').value);
+
+      document.getElementById('val-orbit').textContent = `${orbitDeg}°`;
+      document.getElementById('val-exposure').textContent = exposureVal.toFixed(1);
+      document.getElementById('val-bloom').textContent = bloomVal.toFixed(2);
+      document.getElementById('val-lamps').textContent = lampsVal.toFixed(1);
+      document.getElementById('val-fog').textContent = fogVal.toFixed(1);
+      document.getElementById('val-fov').textContent = `${fovVal}°`;
+
+      const rad = (orbitDeg * Math.PI) / 180;
+      const mx = -Math.cos(rad) * 260;
+      const my = 95 + Math.sin(rad) * 140;
+      colossalMoon.position.set(mx, Math.max(45, my), -520);
+      moonLight.position.set(mx, Math.max(60, my), -280);
+
+      moonLight.intensity = exposureVal;
+      ambientLight.intensity = exposureVal * 0.8;
+      bloomPass.strength = bloomVal;
+      sanctuaryGoldLight.intensity = lampsVal;
+      jadeSpiritLight.intensity = lampsVal * 0.9;
+      scene.fog.density = fogVal * 0.001;
+
+      camera.fov = fovVal;
+      camera.updateProjectionMatrix();
+    };
+
+    const LIGHTING_PRESETS = {
+      moonlit: {
+        sky: 0x02060d, fog: 0x030914, moonTint: 0xd8ecff,
+        mist: 0x163648, crest: 0x7898b8, qi: 0xedc967,
+        goldLight: 0xffcb6b, jadeLight: 0x38f2d0,
+        orbit: 45, exposure: 3.0, bloom: 0.68, lamps: 5.4, fogDensity: 1.0
+      },
+      dawn: {
+        sky: 0x140b06, fog: 0x241309, moonTint: 0xffd27d,
+        mist: 0x4a2511, crest: 0xffb86c, qi: 0xfff099,
+        goldLight: 0xffae42, jadeLight: 0xffd700,
+        orbit: 25, exposure: 3.5, bloom: 0.85, lamps: 6.4, fogDensity: 0.9
+      },
+      crimson: {
+        sky: 0x0d0205, fog: 0x1a0308, moonTint: 0xff2e4c,
+        mist: 0x3b0712, crest: 0xd92644, qi: 0xff5500,
+        goldLight: 0xff2e4c, jadeLight: 0xff7733,
+        orbit: 70, exposure: 3.0, bloom: 0.95, lamps: 5.8, fogDensity: 1.3
+      },
+      jade: {
+        sky: 0x010f0d, fog: 0x031c18, moonTint: 0x6bffdf,
+        mist: 0x09423a, crest: 0x38f2d0, qi: 0xa6ffea,
+        goldLight: 0x38f2d0, jadeLight: 0x80ffea,
+        orbit: 55, exposure: 3.2, bloom: 0.75, lamps: 5.6, fogDensity: 1.0
+      },
+      reading: {
+        sky: 0x040b16, fog: 0x06101f, moonTint: 0xffffff,
+        mist: 0x18344a, crest: 0x6a8ca8, qi: 0xedc967,
+        goldLight: 0xffffff, jadeLight: 0x88f7e2,
+        orbit: 45, exposure: 3.8, bloom: 0.22, lamps: 6.8, fogDensity: 0.35
+      }
+    };
+
+    window.applyLightingPreset = function(key, btnEl) {
+      const p = LIGHTING_PRESETS[key];
+      if (!p) return;
+      document.querySelectorAll('.preset-chip').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      scene.background.setHex(p.sky);
+      scene.fog.color.setHex(p.fog);
+      moonShaderMat.uniforms.uTint.value.setHex(p.moonTint);
+      cloudSeaUniforms.uMistColor.value.setHex(p.mist);
+      cloudSeaUniforms.uCrestColor.value.setHex(p.crest);
+      cloudSeaUniforms.uQiGlowColor.value.setHex(p.qi);
+      sanctuaryGoldLight.color.setHex(p.goldLight);
+      jadeSpiritLight.color.setHex(p.jadeLight);
+
+      document.getElementById('sl-orbit').value = p.orbit;
+      document.getElementById('sl-exposure').value = p.exposure;
+      document.getElementById('sl-bloom').value = p.bloom;
+      document.getElementById('sl-lamps').value = p.lamps;
+      document.getElementById('sl-fog').value = p.fogDensity;
+
+      window.updateLightingSliders();
+      playQiNote(660);
+    };
+
+    /*************************************************************************
+     * 8. CLICKABLE 3D FLOATING MOUNTAINS, PAGODAS & 3D REALM BEACONS
+     *************************************************************************/
+    const floatingPeaks = [];
+
+    function createHighPolyFloatingMountain({
+      x, y, z, radius = 24, height = 58, hasPagoda = false, realmKey = "", beaconTitle = ""
+    }) {
+      const peakGroup = new THREE.Group();
+      peakGroup.position.set(x, y, z);
+
+      const geo = new THREE.ConeGeometry(radius, height, 64, 32);
+      geo.rotateX(Math.PI);
+      const posAttr = geo.attributes.position;
+      const v = new THREE.Vector3();
+
+      for (let i = 0; i < posAttr.count; i++) {
+        v.fromBufferAttribute(posAttr, i);
+        const normY = (v.y + height / 2) / height;
+        const angle = Math.atan2(v.z, v.x);
+        const ridge = ridgeFbm(Math.cos(angle) * 2.5 + x * 0.01, normY * 4.0 + z * 0.01, 4);
+        const crag = (ridge - 0.45) * radius * 0.42 * Math.sin(normY * Math.PI);
+        const radialDist = Math.sqrt(v.x * v.x + v.z * v.z);
+        if (radialDist > 0.001) {
+          const factor = (radialDist + crag) / radialDist;
+          v.x *= factor; v.z *= factor;
+        }
+        posAttr.setXYZ(i, v.x, v.y - height / 2, v.z);
+      }
+      geo.computeVertexNormals();
+      const mountainMesh = new THREE.Mesh(geo, matHighRock);
+
+      if (realmKey) {
+        mountainMesh.userData = {
+          clickable: true,
+          title: beaconTitle || realmKey.toUpperCase(),
+          subtitle: "CLICK MOUNTAIN TO FLY TO THIS REALM",
+          onClick: () => window.flyToRealm(realmKey)
+        };
+        clickableWorldMeshes.push(mountainMesh);
+      }
+      peakGroup.add(mountainMesh);
+
+      const terraceMesh = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.92, radius * 0.82, 3.2, 48), matObsidianStele);
+      terraceMesh.position.y = 1.2;
+      if (realmKey) {
+        terraceMesh.userData = mountainMesh.userData;
+        clickableWorldMeshes.push(terraceMesh);
+      }
+      peakGroup.add(terraceMesh);
+
+      const leylineMesh = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.88, 0.28, 16, 72), matImmortalJade);
+      leylineMesh.rotation.x = Math.PI / 2;
+      leylineMesh.position.y = 2.6;
+      peakGroup.add(leylineMesh);
+
+      if (hasPagoda) {
+        const pagoda = createHighDetailPagoda(radius * 0.045, realmKey, beaconTitle);
+        pagoda.position.y = 2.8;
+        peakGroup.add(pagoda);
+      }
+
+      if (realmKey && beaconTitle) {
+        const beaconDiv = document.createElement('div');
+        beaconDiv.innerHTML = `<button class="world-beacon-tag" onclick="window.flyToRealm('${realmKey}')">❖ ${beaconTitle}</button>`;
+        const beaconCSS = new CSS3DObject(beaconDiv);
+        beaconCSS.position.set(0, 38, 0);
+        beaconCSS.scale.setScalar(0.055);
+        peakGroup.add(beaconCSS);
+      }
+
+      xianxiaGroup.add(peakGroup);
+      floatingPeaks.push({ group: peakGroup, baseY: y, phase: Math.random() * Math.PI * 2 });
+      return peakGroup;
+    }
+
+    function createHighDetailPagoda(scale = 1, realmKey = "", beaconTitle = "") {
+      const pagoda = new THREE.Group();
+      pagoda.scale.setScalar(scale);
+      const eavePoints = [
+        new THREE.Vector2(0.2, 2.6), new THREE.Vector2(3.5, 1.4),
+        new THREE.Vector2(6.8, 0.3), new THREE.Vector2(8.8, 0.85), new THREE.Vector2(8.2, 0.0)
+      ];
+      for (let t = 0; t < 4; t++) {
+        const s = 1 - t * 0.18;
+        const yOff = t * 6.5;
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(5.5 * s, 5.8 * s, 4.8, 16), matObsidianStele);
+        core.position.y = yOff + 2.4;
+        if (realmKey) {
+          core.userData = {
+            clickable: true, title: beaconTitle, subtitle: "CLICK PAGODA TO ENTER REALM",
+            onClick: () => window.flyToRealm(realmKey)
+          };
+          clickableWorldMeshes.push(core);
+        }
+        pagoda.add(core);
+        const roofMesh = new THREE.Mesh(new THREE.LatheGeometry(eavePoints, 8), matImperialGold);
+        roofMesh.scale.setScalar(s);
+        roofMesh.position.y = yOff + 4.8;
+        pagoda.add(roofMesh);
+      }
+      const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.9, 8, 16), matImmortalJade);
+      spire.position.y = 29;
+      pagoda.add(spire);
+      return pagoda;
+    }
+
+    createHighPolyFloatingMountain({ x: 0, y: 0, z: 28, radius: 26, height: 62, realmKey: 'hero', beaconTitle: '00 — IMMORTAL SANCTUARY' });
+    createHighPolyFloatingMountain({ x: 0, y: 12, z: -85, radius: 32, height: 74, realmKey: 'origin', beaconTitle: '01 — ORIGIN REALM' });
+    createHighPolyFloatingMountain({ x: 125, y: 22, z: -45, radius: 38, height: 80, realmKey: 'cultivation', beaconTitle: '02 — CULTIVATION ARRAY' });
+    createHighPolyFloatingMountain({ x: -135, y: 26, z: -45, radius: 38, height: 82, realmKey: 'artifacts', beaconTitle: '03 — ARTIFACT VAULT' });
+    createHighPolyFloatingMountain({ x: 0, y: 56, z: -220, radius: 34, height: 85, hasPagoda: true, realmKey: 'ascension', beaconTitle: '04 — ASCENSION SUMMIT' });
+    createHighPolyFloatingMountain({ x: 0, y: 88, z: -390, radius: 44, height: 105, realmKey: 'contact', beaconTitle: '05 — CELESTIAL GATE' });
+
+    /*************************************************************************
+     * 9. BUILD THE PROTAGONIST & THE 5 GRAND HUMAN IMMORTAL DEITIES
+     *************************************************************************/
+    // MAIN CULTIVATOR PROTAGONIST (SHIVAKANT KURMI)
+    const cultivator = createTrueHumanImmortal({
+      deityKey: "protagonist",
+      name: "IMMORTAL CULTIVATOR — SHIVAKANT KURMI",
+      subtitle: "Click to zoom in on Protagonist & Nine-Sword Spirit Array",
+      pos: new THREE.Vector3(-4, 2.8, 30),
+      scale: 1.5,
+      robeHex: 0x071628,
+      innerRobeHex: 0x103c48,
+      trimHex: 0xedc967,
+      auraHex: 0x38f2d0,
+      trimMat: matImperialGold,
+      glowMat: matImmortalJade,
+      posture: "standing",
+      armPose: "hero",
+      headgear: "guan"
+    });
+    xianxiaGroup.add(cultivator);
+
+    const nineSwordsGroup = new THREE.Group();
+    nineSwordsGroup.position.set(0, 3.8, -1.2);
+    cultivator.add(nineSwordsGroup);
+    for (let i = 0; i < 9; i++) {
+      const ang = (i / 9) * Math.PI * 2;
+      const sw = createHumanWeapon("jade_sword", i % 2 === 0 ? matImmortalJade : matImperialGold, matImperialGold);
+      sw.scale.setScalar(0.55);
+      sw.position.set(Math.cos(ang) * 2.6, Math.sin(ang) * 2.6, 0);
+      sw.rotation.z = ang - Math.PI / 2;
+      nineSwordsGroup.add(sw);
+    }
+
+    const immortalDeityAnimations = [];
+    function attachDeityRegalia(deityGroup, { name, title, lore, targetRealm, haloTex = baguaGoldTex }) {
+      const halo = new THREE.Mesh(
+        new THREE.PlaneGeometry(7.8, 7.8),
+        new THREE.MeshBasicMaterial({ map: haloTex, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
+      );
+      halo.position.set(0, 4.4, -1.4);
+      deityGroup.add(halo);
+
+      const plaqueDiv = document.createElement('div');
+      plaqueDiv.style.width = '380px';
+      plaqueDiv.innerHTML = `
+        <div class="spatial-stele" style="padding:18px 22px; cursor:pointer;" onclick="window.flyToRealm('${targetRealm}')">
+          <div class="stele-eyebrow" style="font-size:0.68rem;">GRAND HUMAN IMMORTAL DEITY</div>
+          <div class="stele-title" style="font-size:1.35rem;">${name}</div>
+          <div class="stele-subtitle" style="font-size:0.95rem;">${title}</div>
+          <p class="stele-body" style="font-size:0.82rem; margin-top:6px;">${lore}</p>
+        </div>
+      `;
+      const plaqueCSS = new CSS3DObject(plaqueDiv);
+      plaqueCSS.position.set(4.1, 3.5, 0.8);
+      plaqueCSS.scale.setScalar(0.0075);
+      deityGroup.add(plaqueCSS);
+
+      immortalDeityAnimations.push({ deityGroup, halo, baseY: deityGroup.position.y });
+    }
+
+    // DEITY 1: ANCIENT SWORD IMMORTAL (万剑仙尊 — Towering on Left of Sanctuary & Origin)
+    const swordImmortal = createTrueHumanImmortal({
+      deityKey: "sword",
+      name: "ANCIENT SWORD IMMORTAL (万剑仙尊)",
+      subtitle: "Click to zoom into the Human Sword Sage & 24-Blade Peacock Array",
+      pos: new THREE.Vector3(-32, 10, 12),
+      scale: 4.2,
+      robeHex: 0x0b2238,
+      innerRobeHex: 0x1a5466,
+      trimHex: 0xedc967,
+      auraHex: 0x38f2d0,
+      trimMat: matImperialGold,
+      glowMat: matImmortalJade,
+      hairColor: 0xe6f2ff,
+      posture: "standing",
+      armPose: "sword_mantra",
+      headgear: "guan"
+    });
+    const peacockSwords = new THREE.Group();
+    peacockSwords.position.set(0, 3.9, -1.5);
+    for (let i = 0; i < 24; i++) {
+      const ang = ((i / 23) - 0.5) * Math.PI * 1.4;
+      const blade = createHumanWeapon("jade_sword", i % 2 === 0 ? matImmortalJade : matImperialGold, matImperialGold);
+      blade.scale.setScalar(0.68);
+      blade.position.set(Math.sin(ang) * 4.5, Math.cos(ang) * 4.5 - 1.2, -0.3);
+      blade.rotation.z = -ang;
+      peacockSwords.add(blade);
+    }
+    swordImmortal.add(peacockSwords);
+    attachDeityRegalia(swordImmortal, {
+      name: "ANCIENT SWORD IMMORTAL",
+      title: "Sovereign of Ten Thousand Spirit Blades",
+      lore: "Human Sword Sage in split Hanfu robes & 24-blade peacock fan. Click for Origin.",
+      targetRealm: "origin"
+    });
+    xianxiaGroup.add(swordImmortal);
+
+    // DEITY 2: ANCIENT ROYAL GOD (太古神皇 — Towering Above Origin Sanctuary in Imperial Dragon Robes)
+    const royalGod = createTrueHumanImmortal({
+      deityKey: "royal",
+      name: "ANCIENT ROYAL GOD (太古神皇)",
+      subtitle: "Click to inspect the Imperial Dragon Robes, 12-Strand Mianliu Crown & Twin Dragons",
+      pos: new THREE.Vector3(-28, 22, -98),
+      scale: 5.5,
+      robeHex: 0x1c1204,
+      innerRobeHex: 0x4d3208,
+      trimHex: 0xfff099,
+      auraHex: 0xffc83b,
+      trimMat: matImperialGold,
+      glowMat: matImperialGold,
+      hasBeard: true,
+      posture: "standing",
+      armPose: "emperor",
+      headgear: "mianliu"
+    });
+    [-1, 1].forEach(side => {
+      const dragonCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(side * 2.4, 0.5, -0.8),
+        new THREE.Vector3(side * 3.7, 2.3, 0.6),
+        new THREE.Vector3(side * 2.2, 4.2, -0.6),
+        new THREE.Vector3(side * 3.4, 5.9, 0.9)
+      ]);
+      const dragonBody = new THREE.Mesh(new THREE.TubeGeometry(dragonCurve, 40, 0.26, 16, false), matImperialGold);
+      const dragonHead = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.98, 6), matImmortalJade);
+      dragonHead.position.set(side * 3.4, 6.1, 1.2);
+      dragonHead.rotation.x = Math.PI / 2;
+      royalGod.add(dragonBody, dragonHead);
+    });
+    attachDeityRegalia(royalGod, {
+      name: "ANCIENT ROYAL GOD",
+      title: "Supreme Celestial Emperor of the Nine Heavens",
+      lore: "Clad in Imperial Dragon Robes & 12-Strand Mianliu Crown, wielding the Scepter & Heaven Seal.",
+      targetRealm: "cultivation"
+    });
+    xianxiaGroup.add(royalGod);
+
+    // DEITY 3: THUNDER IMMORTAL (九天雷帝 — Guarding the Cultivation Array with 9 Drums & Live Lightning)
+    const thunderImmortal = createTrueHumanImmortal({
+      deityKey: "thunder",
+      name: "THUNDER IMMORTAL (九天雷帝)",
+      subtitle: "Click to inspect the Thunder God Robes, 9 Leigu Drums & Live 3D Lightning Spear",
+      pos: new THREE.Vector3(162, 28, -58),
+      scale: 5.2,
+      robeHex: 0x11092a,
+      innerRobeHex: 0x2c1866,
+      trimHex: 0x00f0ff,
+      auraHex: 0xb388ff,
+      trimMat: matImperialGold,
+      glowMat: matThunderViolet,
+      hairColor: 0xe2d4ff,
+      posture: "standing",
+      armPose: "thunder_spear",
+      headgear: "thunder_crest"
+    });
+    const thunderDrumsGroup = new THREE.Group();
+    thunderDrumsGroup.position.set(0, 4.3, -1.0);
+    const lightningLines = [];
+    for (let d = 0; d < 9; d++) {
+      const ang = (d / 9) * Math.PI * 2;
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.36, 20), matImperialGold);
+      drum.rotation.x = Math.PI / 2;
+      drum.position.set(Math.cos(ang) * 3.7, Math.sin(ang) * 3.7, 0);
+      thunderDrumsGroup.add(drum);
+
+      const lGeo = new THREE.BufferGeometry().setFromPoints([
+        drum.position.clone(), new THREE.Vector3(0, 0, 0), new THREE.Vector3(1.3, 2.8, 0.5)
+      ]);
+      const lLine = new THREE.Line(lGeo, new THREE.LineBasicMaterial({ color: 0x70f8ff }));
+      thunderDrumsGroup.add(lLine);
+      lightningLines.push({ line: lLine, start: drum.position.clone() });
+    }
+    thunderImmortal.add(thunderDrumsGroup);
+    attachDeityRegalia(thunderImmortal, {
+      name: "THUNDER IMMORTAL",
+      title: "Nine-Heavens Sovereign of Tribulation Lightning",
+      lore: "Raising the Heavenly Lightning Spear amidst 9 Leigu drums and live electric Qi arcs.",
+      targetRealm: "artifacts",
+      haloTex: baguaThunderTex
+    });
+    xianxiaGroup.add(thunderImmortal);
+
+    // DEITY 4: ANCIENT DEMON GOD (太古魔尊 — 4 Articulated Human Arms & Twin Blood Halberds)
+    const ancientDemon = createTrueHumanImmortal({
+      deityKey: "demon",
+      name: "ANCIENT DEMON SOVEREIGN (太古魔尊)",
+      subtitle: "Click to inspect the Four-Armed Asura Warlord & Twin Crimson Halberds",
+      pos: new THREE.Vector3(-168, 32, -62),
+      scale: 5.4,
+      robeHex: 0x1a0308,
+      innerRobeHex: 0x450615,
+      trimHex: 0xff2e4c,
+      auraHex: 0xff1e42,
+      trimMat: matImperialGold,
+      glowMat: matCrimsonAsura,
+      skinColor: 0xdcc4ca,
+      hairColor: 0x1c0207,
+      posture: "standing",
+      armPose: "demon_four_arms",
+      headgear: "demon_horns"
+    });
+    attachDeityRegalia(ancientDemon, {
+      name: "ANCIENT DEMON GOD",
+      title: "Four-Armed Asura Sovereign of the Blood Vault",
+      lore: "Wielding twin Crimson Halberds with four human arms in blazing blood-fire robes.",
+      targetRealm: "nexion",
+      haloTex: baguaCyanTex
+    });
+    xianxiaGroup.add(ancientDemon);
+
+    // DEITY 5: VOID SOVEREIGN (虚空古神 — Seated in Cross-Legged Lotus Meditation)
+    const voidSovereign = createTrueHumanImmortal({
+      deityKey: "void",
+      name: "VOID SOVEREIGN (虚空古神)",
+      subtitle: "Click to commune with the Lotus-Seated Cosmic Ancestor",
+      pos: new THREE.Vector3(0, 108, -425),
+      scale: 6.8,
+      robeHex: 0x060417,
+      innerRobeHex: 0x1a1042,
+      trimHex: 0xedc967,
+      auraHex: 0x38f2d0,
+      trimMat: matImperialGold,
+      glowMat: matImmortalJade,
+      hairColor: 0xffffff,
+      posture: "lotus",
+      armPose: "lotus_mudra",
+      headgear: "guan"
+    });
+    const armillaryRing1 = new THREE.Mesh(new THREE.TorusGeometry(4.0, 0.09, 16, 64), matImperialGold);
+    armillaryRing1.position.y = 2.4;
+    const armillaryRing2 = new THREE.Mesh(new THREE.TorusGeometry(4.6, 0.09, 16, 64), matImmortalJade);
+    armillaryRing2.position.y = 2.4;
+    armillaryRing2.rotation.x = Math.PI / 3;
+    voidSovereign.add(armillaryRing1, armillaryRing2);
+    attachDeityRegalia(voidSovereign, {
+      name: "VOID SOVEREIGN",
+      title: "Cosmic Dao Ancestor of the Celestial Gate",
+      lore: "Seated in eternal Lotus Meditation inside a rotating celestial armillary sphere.",
+      targetRealm: "hero"
+    });
+    xianxiaGroup.add(voidSovereign);
+
+    /*************************************************************************
+     * 10. BUILD ALL 3D SPATIAL PORTFOLIO REALM MONUMENTS
+     *************************************************************************/
+
+    // REALM 00 — HERO: THE IMMORTAL REALM
+    createSpatial3DStele({
+      id: "hero_main", widthPx: 760, heightPx: 460,
+      position: new THREE.Vector3(10, 13.5, 25), rotationY: -0.15, scale: 0.035, zoomDist: 16,
+      htmlContent: `
+        <div class="spatial-stele">
+          <div class="stele-watermark">仙域</div>
+          <div class="stele-eyebrow">太古仙域 • THE IMMORTAL CULTIVATION REALM</div>
+          <h1 class="stele-title">SHIVAKANT KURMI</h1>
+          <div class="stele-subtitle">Computer Science Engineer (Gaming Technology)</div>
+          <div style="margin-top:8px; font-family:'Cinzel',serif; font-size:0.95rem; font-weight:700; letter-spacing:0.18em; color:var(--jade);">
+            GAME DEVELOPER • FULL-STACK DEVELOPER • AI ENTHUSIAST
+          </div>
+          <p class="stele-body">
+            Every stone tablet, skill talisman, floating mountain, and bipedal Human Immortal Deity in this 3D world is directly interactive. <strong>Click any statue or use the ⚡ INSPECT IMMORTAL STATUES bar above</strong> to fly right up to the Ancient Royal God, Thunder Immortal, or Demon Sovereign.
+          </p>
+          <div class="stele-btn-row">
+            <button class="jade-3d-btn" onclick="window.flyToRealm('origin')">⚔ ENTER THE REALM</button>
+            <button class="jade-3d-btn secondary" onclick="window.focusDeityByKey('royal')">👑 INSPECT ANCIENT ROYAL GOD</button>
+            <button class="jade-3d-btn secondary" onclick="window.focusDeityByKey('thunder')">⚡ INSPECT THUNDER IMMORTAL</button>
+          </div>
+        </div>
+      `
+    });
+
+    // REALM 01 — ORIGIN (ABOUT ME)
+    createSpatial3DStele({
+      id: "origin_main", widthPx: 760, heightPx: 470,
+      position: new THREE.Vector3(0, 29, -85), rotationY: 0, scale: 0.035, zoomDist: 16,
+      htmlContent: `
+        <div class="spatial-stele">
+          <div class="stele-watermark">本源</div>
+          <div class="stele-eyebrow">01 — ORIGIN REALM • GUARDED BY THE ANCIENT ROYAL GOD</div>
+          <h2 class="stele-title">SHIVAKANT KURMI</h2>
+          <div class="stele-subtitle">B.Tech Computer Science & Engineering (Gaming Technology) • VIT Bhopal University</div>
+          <p class="stele-body">
+            Like an immortal cultivator refining both sword intent and spiritual formations, I architect high-definition 3D game worlds in <strong>Unity 6 (HDRP) & C#</strong>, scalable full-stack web ecosystems in the <strong>MERN Stack</strong>, and intelligent <strong>RAG & Generative AI</strong> engines.
+          </p>
+          <p class="stele-body" style="margin-top:10px;">
+            Maintaining a <strong>9.83 / 10 CGPA</strong> at VIT Bhopal and having solved over <strong>900+ algorithmic problems</strong> across LeetCode and GeeksforGeeks, every project is engineered for visual mastery and rock-solid performance.
+          </p>
+          <div class="stele-btn-row">
+            <button class="jade-3d-btn" onclick="window.flyToRealm('cultivation')">INSPECT CULTIVATION SKILLS →</button>
+            <button class="jade-3d-btn secondary" onclick="window.focusDeityByKey('royal')">👑 ZOOM TO ANCIENT ROYAL GOD</button>
+          </div>
+        </div>
+      `
+    });
+
+    const ORIGIN_SEALS = [
+      { id: "seal_0", kanji: "域", metric: "10+", title: "REALMS", sub: "Projects Forged", pos: new THREE.Vector3(-21, 35, -79), rotY: 0.32 },
+      { id: "seal_1", kanji: "术", metric: "23+", title: "TECHNIQUES", sub: "Core Technologies", pos: new THREE.Vector3(21, 35, -79), rotY: -0.32 },
+      { id: "seal_2", kanji: "道", metric: "9.83", title: "YEARS OF CULTIVATION", sub: "CGPA & 900+ DSA Trials", pos: new THREE.Vector3(-21, 22, -79), rotY: 0.32 },
+      { id: "seal_3", kanji: "器", metric: "3D & AI", title: "CREATIONS", sub: "Games & Applications", pos: new THREE.Vector3(21, 22, -79), rotY: -0.32 }
+    ];
+    ORIGIN_SEALS.forEach(seal => {
+      const sealGroup = createSpatial3DStele({
+        id: seal.id, widthPx: 310, heightPx: 255, position: seal.pos, rotationY: seal.rotY,
+        scale: 0.034, zoomDist: 10, hasHoloRing: false,
+        htmlContent: `
+          <div class="spatial-stele seal-monolith">
+            <div class="seal-kanji-coin">${seal.kanji}</div>
+            <div class="seal-number">${seal.metric}</div>
+            <div class="seal-label">${seal.title}</div>
+            <div class="seal-sub">${seal.sub}</div>
+          </div>
+        `
+      });
+      sealGroup.children[0].element.addEventListener('click', () => window.zoomTo3DNode(sealGroup, 10));
+    });
+
+    // REALM 02 — CULTIVATION (SKILLS)
+    createSpatial3DStele({
+      id: "cultivation_main", widthPx: 740, heightPx: 450,
+      position: new THREE.Vector3(125, 48, -50), rotationY: 0, scale: 0.034, zoomDist: 15,
+      htmlContent: `
+        <div class="spatial-stele" id="cultivation-central-stele">
+          <div class="stele-watermark">功法</div>
+          <div class="stele-eyebrow">02 — CULTIVATION TECHNIQUES • GUARDED BY THE THUNDER IMMORTAL</div>
+          <h2 class="stele-title" id="skill-3d-title">UNITY 6 & HDRP</h2>
+          <div class="stele-subtitle" id="skill-3d-cat">GAME DEVELOPMENT REALM</div>
+          <p class="stele-body" id="skill-3d-desc">
+            Click any of the 23 Jade Skill Tablets in the curved 3D amphitheater below to zoom right up to it, or inspect the Thunder Immortal statue to the right.
+          </p>
+          <div style="margin-top:12px; font-size:1rem; color:var(--jade);" id="skill-3d-app">
+            <strong>Manifested In:</strong> NEX//ION (Unity 6 • HDRP • C#) & XR Simulations
+          </div>
+          <div class="filter-pill-row">
+            <button class="filter-pill active" onclick="window.filter3DSkills('ALL', this)">ALL (23)</button>
+            <button class="filter-pill" onclick="window.filter3DSkills('PROGRAMMING', this)">PROGRAMMING</button>
+            <button class="filter-pill" onclick="window.filter3DSkills('FULL STACK', this)">FULL STACK</button>
+            <button class="filter-pill" onclick="window.filter3DSkills('AI / ML', this)">AI / ML</button>
+            <button class="filter-pill" onclick="window.filter3DSkills('GAME DEVELOPMENT', this)">GAME DEV</button>
+            <button class="filter-pill" onclick="window.filter3DSkills('CLOUD / TOOLS', this)">CLOUD / TOOLS</button>
+            <button class="filter-pill" style="border-color:var(--jade); color:var(--jade);" onclick="window.focusDeityByKey('thunder')">⚡ ZOOM TO THUNDER IMMORTAL</button>
+          </div>
+        </div>
+      `
+    });
+
+    const skillWheel3DGroup = new THREE.Group();
+    skillWheel3DGroup.position.set(125, 30, -42);
+    xianxiaGroup.add(skillWheel3DGroup);
+
+    const skillTalismanNodes = [];
+
+    SKILLS_LIST.forEach((sk, idx) => {
+      const cols = 6;
+      const row = Math.floor(idx / cols);
+      const col = idx % cols;
+      const normCol = (col - (cols - 1) / 2);
+      const curveAngle = normCol * 0.16;
+      const radius = 34;
+
+      const x = Math.sin(curveAngle) * radius * 1.45;
+      const z = (1.0 - Math.cos(curveAngle)) * radius * 0.85;
+      const y = (1.5 - row) * 4.4;
+
+      const nodeGroup = new THREE.Group();
+      nodeGroup.position.set(x, y, z);
+      nodeGroup.rotation.y = -curveAngle * 0.85;
+      skillWheel3DGroup.add(nodeGroup);
+
+      const slipDiv = document.createElement('div');
+      slipDiv.className = 'talisman-slip' + (idx === 14 ? ' active' : '');
+      slipDiv.innerHTML = `
+        <div class="talisman-rune">${sk.glyph}</div>
+        <div>
+          <span class="talisman-name">${sk.name}</span>
+          <span class="talisman-cat">${sk.cat}</span>
+        </div>
+      `;
+      slipDiv.addEventListener('mouseenter', () => window.activate3DSkill(idx, false));
+      slipDiv.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.activate3DSkill(idx, true);
+      });
+
+      const cssSlip = new CSS3DObject(slipDiv);
+      cssSlip.scale.setScalar(0.032);
+      nodeGroup.add(cssSlip);
+
+      const sword3D = createHumanWeapon("jade_sword", idx % 2 === 0 ? matImmortalJade : matImperialGold, matImperialGold);
+      sword3D.scale.setScalar(0.6);
+      sword3D.position.set(0, -1.2, -0.9);
+      sword3D.traverse(child => {
+        if (child.isMesh) {
+          child.userData = {
+            clickable: true,
+            title: `TECHNIQUE: ${sk.name}`,
+            subtitle: "CLICK TO ZOOM IN ON SKILL TABLET",
+            onClick: () => window.activate3DSkill(idx, true)
+          };
+          clickableWorldMeshes.push(child);
+        }
+      });
+      nodeGroup.add(sword3D);
+
+      skillTalismanNodes.push({ sk, nodeGroup, slipDiv, sword3D });
+    });
+
+    const beamGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 18, -8), new THREE.Vector3(0, 0, 0)]);
+    const qiConnectorBeam = new THREE.Line(beamGeo, new THREE.LineBasicMaterial({ color: 0x38f2d0 }));
+    skillWheel3DGroup.add(qiConnectorBeam);
+
+    window.activate3DSkill = function(index, zoomToSlip = false) {
+      const item = skillTalismanNodes[index];
+      if (!item) return;
+      skillTalismanNodes.forEach((n, i) => n.slipDiv.classList.toggle('active', i === index));
+      document.getElementById('skill-3d-title').textContent = item.sk.name;
+      document.getElementById('skill-3d-cat').textContent = item.sk.cat + " REALM";
+      document.getElementById('skill-3d-desc').textContent = item.sk.desc;
+      document.getElementById('skill-3d-app').innerHTML = `<strong>Manifested In:</strong> ${item.sk.app}`;
+
+      qiConnectorBeam.geometry.setFromPoints([new THREE.Vector3(0, 18, -8), item.nodeGroup.position.clone()]);
+      if (zoomToSlip) window.zoomTo3DNode(item.nodeGroup, 11);
+      else playQiNote(520 + index * 12);
+    };
+
+    window.filter3DSkills = function(cat, btn) {
+      document.querySelectorAll('#cultivation-central-stele .filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      skillTalismanNodes.forEach(n => {
+        const match = (cat === 'ALL' || n.sk.cat === cat);
+        gsap.to(n.nodeGroup.scale, { x: match ? 1 : 0.25, y: match ? 1 : 0.25, z: match ? 1 : 0.25, duration: 0.5 });
+        n.slipDiv.style.opacity = match ? '1' : '0.2';
+      });
+      playQiNote(440);
+    };
+
+    // REALM 03 — ARTIFACTS (IMMORTAL ARTIFACT VAULT)
+    const vaultCenter = new THREE.Vector3(-135, 42, -45);
+    const artifactRelicMeshes = [];
+
+    ARTIFACTS_LIST.forEach((art, idx) => {
+      const t = (idx / (ARTIFACTS_LIST.length - 1)) - 0.5;
+      const angle = t * 1.65;
+      const radius = 38;
+      const px = vaultCenter.x + Math.sin(angle) * radius;
+      const pz = vaultCenter.z - Math.cos(angle) * radius + 18;
+      const py = vaultCenter.y + (idx % 2 === 0 ? 3 : -3);
+
+      const steleGroup = createSpatial3DStele({
+        id: "artifact_" + idx, widthPx: 520, heightPx: 400,
+        position: new THREE.Vector3(px, py, pz), rotationY: -angle, scale: 0.032, zoomDist: 14,
+        accentMat: art.isNexion ? matImmortalJade : matImperialGold,
+        htmlContent: `
+          <div class="spatial-stele artifact-pedestal-stele ${art.isNexion ? 'nexion-special' : ''}" onclick="window.focusArtifactPedestal(${idx})">
+            <div class="stele-watermark">${art.glyph}</div>
+            <div class="stele-eyebrow">IMMORTAL ARTIFACT 0${idx + 1}</div>
+            <h3 class="stele-title" style="font-size:1.95rem;">${art.name}</h3>
+            <div class="stele-subtitle" style="font-size:1.15rem;">${art.subtitle}</div>
+            <p class="stele-body" style="font-size:0.95rem;">${art.desc}</p>
+            <div class="chip-wrap">
+              ${art.tech.map(tc => `<span class="tech-chip">${tc}</span>`).join('')}
+            </div>
+            <div class="stele-btn-row" style="margin-top:16px;">
+              ${art.isNexion ? `<button class="jade-3d-btn" onclick="event.stopPropagation(); window.flyToRealm('nexion')">⚡ ENTER NEX//ION REALM</button>` : ''}
+              <a class="jade-3d-btn secondary" href="${art.github}" target="_blank" rel="noopener" onclick="event.stopPropagation()">GITHUB ↗</a>
+              ${art.live ? `<a class="jade-3d-btn secondary" href="${art.live}" target="_blank" rel="noopener" onclick="event.stopPropagation()">LIVE REALM ↗</a>` : ''}
+            </div>
+          </div>
+        `
+      });
+
+      const relicGeo = idx === 0 ? new THREE.TorusKnotGeometry(2.2, 0.45, 96, 24) : new THREE.IcosahedronGeometry(2.3, 1);
+      const relicMesh = new THREE.Mesh(relicGeo, idx % 2 === 0 ? matImmortalJade : matImperialGold);
+      relicMesh.position.set(0, 9.5, 0);
+      relicMesh.userData = {
+        clickable: true,
+        title: `ARTIFACT: ${art.name}`,
+        subtitle: art.isNexion ? "CLICK RELIC TO ENTER NEX//ION CYBERPUNK REALM" : "CLICK RELIC TO ZOOM INTO PEDESTAL",
+        onClick: () => art.isNexion ? window.flyToRealm('nexion') : window.focusArtifactPedestal(idx)
+      };
+      clickableWorldMeshes.push(relicMesh);
+      steleGroup.add(relicMesh);
+      artifactRelicMeshes.push({ relicMesh, steleGroup });
+    });
+
+    window.focusArtifactPedestal = function(idx) {
+      const target = artifactRelicMeshes[idx];
+      if (target) window.zoomTo3DNode(target.steleGroup, 15);
+    };
+
+    // SPECIAL REALM — NEX//ION 3D CYBERPUNK UNIVERSE at (0, 25, 320)
+    const cyberGrid = new THREE.GridHelper(320, 80, 0x00f0ff, 0x0a2540);
+    cyberGrid.position.set(0, 2, 320);
+    nexionGroup.add(cyberGrid);
+
+    const matCyberTower = new THREE.MeshStandardMaterial({
+      color: 0x040b16, emissive: 0x00334d, emissiveIntensity: 0.75, roughness: 0.2, metalness: 0.88
+    });
+    for (let i = 0; i < 36; i++) {
+      const ang = (i / 36) * Math.PI * 2;
+      const r = 52 + (i % 3) * 24;
+      const h = 28 + (i % 5) * 18;
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(7, h, 7), matCyberTower);
+      tower.position.set(Math.cos(ang) * r, h / 2 + 2, 320 + Math.sin(ang) * r);
+      nexionGroup.add(tower);
+    }
+
+    const matCyberCore = new THREE.MeshStandardMaterial({
+      color: 0x00f0ff, emissive: 0x0088aa, emissiveIntensity: 1.2, wireframe: true
+    });
+    const nexionCoreMesh = new THREE.Mesh(new THREE.TorusKnotGeometry(6.5, 1.4, 120, 24, 3, 4), matCyberCore);
+    nexionCoreMesh.position.set(0, 34, 295);
+    nexionGroup.add(nexionCoreMesh);
+
+    createSpatial3DStele({
+      id: "nexion_main", widthPx: 740, heightPx: 420,
+      position: new THREE.Vector3(0, 24, 305), rotationY: 0, scale: 0.033, zoomDist: 16,
+      parentGroup: nexionGroup, accentMat: matImmortalJade,
+      htmlContent: `
+        <div class="cyber-3d-terminal" id="nexion-main-terminal">
+          <div style="color:var(--cyber-cyan); font-size:0.82rem; letter-spacing:0.26em;">⚡ DIMENSIONAL RIFT // UNITY 6 • HDRP • C#</div>
+          <h2 style="font-size:2.7rem; color:#fff; margin-top:6px; text-shadow:0 0 22px var(--cyber-cyan);">NEX//ION</h2>
+          <div style="color:var(--cyber-magenta); font-size:0.98rem; letter-spacing:0.16em; margin-top:4px;">
+            STORY-DRIVEN CYBERPUNK PUZZLE ADVENTURE
+          </div>
+          <p style="font-size:1rem; line-height:1.65; color:#d8ecff; margin-top:14px;">
+            You have entered the 3D neural architecture of <strong>NEX//ION</strong>. Toggle between <strong>HUMAN MODE</strong> and <strong>CPU MODE</strong> below, or click any of the 6 surrounding system terminals to zoom in.
+          </p>
+          <div class="stele-btn-row">
+            <button class="jade-3d-btn" style="background:var(--cyber-cyan); border-color:#fff;" onclick="window.switchNexion3DMode('human')">◈ HUMAN MODE (NEON CITY)</button>
+            <button class="jade-3d-btn secondary" style="border-color:var(--cyber-magenta); color:var(--cyber-magenta);" onclick="window.switchNexion3DMode('cpu')">❖ CPU MODE (LOGIC GRID)</button>
+            <button class="jade-3d-btn secondary" onclick="window.flyToRealm('artifacts')">← RETURN TO VAULT</button>
+          </div>
+        </div>
+      `
+    });
+
+    const NEXION_PILLARS = [
+      { title: "01 // DUAL-MODE SYSTEM", desc: "Real-time state switching between physical Human traversal and CPU logic-circuit infiltration.", pos: new THREE.Vector3(-28, 32, 312), rotY: 0.42 },
+      { title: "02 // PUZZLE SYSTEM", desc: "Multi-node logic routing, voltage bridges, and encrypted terminal puzzles across dimensions.", pos: new THREE.Vector3(-28, 19, 312), rotY: 0.42 },
+      { title: "03 // LEVEL DESIGN", desc: "Vertical neon megastructure sectors engineered with sightline guidance and environmental clues.", pos: new THREE.Vector3(-28, 6, 312), rotY: 0.42 },
+      { title: "04 // NARRATIVE", desc: "Interactive neural logs exploring synthetic consciousness, memory reconstruction, and AI autonomy.", pos: new THREE.Vector3(28, 32, 312), rotY: -0.42 },
+      { title: "05 // HDRP RENDERING", desc: "Unity 6 High-Definition Render Pipeline with volumetric fog, rain reflections, and custom shaders.", pos: new THREE.Vector3(28, 19, 312), rotY: -0.42 },
+      { title: "06 // PLAYER EXPERIENCE", desc: "Diegetic spatial HUD, smooth camera framing, and reactive synth-cyber audio transitions.", pos: new THREE.Vector3(28, 6, 312), rotY: -0.42 }
+    ];
+    NEXION_PILLARS.forEach(p => {
+      const pGroup = createSpatial3DStele({
+        widthPx: 410, heightPx: 220, position: p.pos, rotationY: p.rotY,
+        scale: 0.03, zoomDist: 11, parentGroup: nexionGroup, hasHoloRing: false, accentMat: matImmortalJade,
+        htmlContent: `
+          <div class="cyber-3d-terminal">
+            <h4 style="color:var(--cyber-cyan); font-size:1rem; letter-spacing:0.12em;">${p.title}</h4>
+            <p style="font-size:0.88rem; color:#d0e4f5; margin-top:8px; line-height:1.5;">${p.desc}</p>
+          </div>
+        `
+      });
+      pGroup.children[0].element.addEventListener('click', () => window.zoomTo3DNode(pGroup, 11));
+    });
+
+    window.switchNexion3DMode = function(mode) {
+      const isCpu = mode === 'cpu';
+      matCyberCore.color.setHex(isCpu ? 0xff0055 : 0x00f0ff);
+      matCyberCore.emissive.setHex(isCpu ? 0x88002b : 0x0088aa);
+      matCyberTower.emissive.setHex(isCpu ? 0x4d001f : 0x00334d);
+      document.querySelectorAll('.cyber-3d-terminal').forEach(el => el.classList.toggle('magenta-mode', isCpu));
+      playQiNote(isCpu ? 880 : 660);
+    };
+
+    // REALM 04 — ASCENSION (EXPERIENCE & CELESTIAL RECORDS)
+    for (let s = 0; s < 28; s++) {
+      const stepMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(18 - s * 0.2, 0.9, 3.2),
+        s % 3 === 0 ? matImperialGold : matObsidianStele
+      );
+      stepMesh.position.set(0, 46 + s * 1.05, -175 - s * 2.1);
+      xianxiaGroup.add(stepMesh);
+    }
+
+    createSpatial3DStele({
+      id: "ascension_main", widthPx: 680, heightPx: 490,
+      position: new THREE.Vector3(-19, 76, -222), rotationY: 0.22, scale: 0.033, zoomDist: 15,
+      htmlContent: `
+        <div class="spatial-stele">
+          <div class="stele-watermark">登仙</div>
+          <div class="stele-eyebrow">04 — ASCENSION PATH • EXPERIENCE</div>
+          <h2 class="stele-title" style="font-size:2.1rem;">REALM MILESTONES</h2>
+          <div style="margin-top:16px; border-left:2px solid var(--gold); padding-left:16px;">
+            <div style="color:var(--jade); font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.18em;">APR 2025 – MAY 2025</div>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:1.45rem; color:var(--gold-bright); font-weight:700;">AI Intern — Microsoft Initiative</div>
+            <div style="font-size:0.92rem; color:#fff;">Edunet Foundation & AICTE</div>
+            <p style="font-size:0.92rem; color:#cce0f0; margin-top:6px; line-height:1.55;">
+              Engineered <strong>EduMentor AI</strong> using Generative AI, Retrieval-Augmented Generation (RAG), FAISS vector indexing, and NLP pipelines.
+            </p>
+          </div>
+          <div style="margin-top:16px; border-left:2px solid var(--jade); padding-left:16px;">
+            <div style="color:var(--jade); font-family:'Cinzel',serif; font-size:0.8rem; letter-spacing:0.18em;">2023 – PRESENT</div>
+            <div style="font-family:'Cormorant Garamond',serif; font-size:1.45rem; color:var(--gold-bright); font-weight:700;">Game Developer & Full-Stack Builder</div>
+            <div style="font-size:0.92rem; color:#fff;">VIT Bhopal Gaming Technology Specialization</div>
+            <p style="font-size:0.92rem; color:#cce0f0; margin-top:6px; line-height:1.55;">
+              Creator of <strong>NEX//ION</strong> (Unity 6 HDRP), <strong>My-Campus</strong>, <strong>CloudFlow</strong>, <strong>Fix-It-Now</strong>, and <strong>AI Expense Tracker</strong>.
+            </p>
+          </div>
+        </div>
+      `
+    });
+
+    createSpatial3DStele({
+      id: "ascension_records", widthPx: 680, heightPx: 490,
+      position: new THREE.Vector3(19, 76, -222), rotationY: -0.22, scale: 0.033, zoomDist: 15,
+      htmlContent: `
+        <div class="spatial-stele">
+          <div class="stele-watermark">天机</div>
+          <div class="stele-eyebrow">CELESTIAL RECORDS • VERIFIED HONOURS</div>
+          <h2 class="stele-title" style="font-size:2.1rem;">ILLUMINATED SCROLLS</h2>
+          <div style="display:grid; gap:10px; margin-top:16px;">
+            <div style="padding:11px 15px; background:rgba(12,30,45,0.9); border:1px solid var(--gold);">
+              <strong style="color:var(--gold-bright); font-family:'Cinzel',serif;">★ District Topper — Damoh District</strong>
+              <div style="font-size:0.86rem; color:#cce0f0;">Ranked #1 across Damoh District in Higher Secondary Examinations</div>
+            </div>
+            <div style="padding:11px 15px; background:rgba(12,30,45,0.9); border:1px solid var(--jade);">
+              <strong style="color:var(--jade); font-family:'Cinzel',serif;">★ CGPA 9.83 / 10.0 — VIT Bhopal University</strong>
+              <div style="font-size:0.86rem; color:#cce0f0;">B.Tech Computer Science & Engineering (Gaming Technology)</div>
+            </div>
+            <div style="padding:11px 15px; background:rgba(12,30,45,0.9); border:1px solid rgba(237,201,103,0.5);">
+              <strong style="color:#fff; font-family:'Cinzel',serif;">★ 900+ DSA Problems Solved & Hackathon Finalist</strong>
+              <div style="font-size:0.86rem; color:#cce0f0;">500+ LeetCode • 400+ GeeksforGeeks • National Hackathons & Competitions</div>
+            </div>
+          </div>
+          <div class="stele-btn-row" style="margin-top:16px;">
+            <button class="jade-3d-btn" onclick="window.flyToRealm('dao_scroll')">📜 INSPECT 3D DAO SCROLL (RESUME)</button>
+          </div>
+        </div>
+      `
+    });
+
+    // DAO OF THE DEVELOPER — UNFOLDING 3D JADE RESUME SCROLL
+    createSpatial3DStele({
+      id: "dao_scroll_main", widthPx: 820, heightPx: 490,
+      position: new THREE.Vector3(0, 98, -245), rotationY: 0, scale: 0.034, zoomDist: 16,
+      htmlContent: `
+        <div class="spatial-stele" style="border-width:4px; border-color:var(--gold-bright);">
+          <div class="stele-watermark">道卷</div>
+          <div class="stele-eyebrow">ANCIENT JADE SCROLL • DAO OF THE DEVELOPER</div>
+          <h2 class="stele-title" style="font-size:2.15rem;">SHIVAKANT KURMI — RESUME</h2>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; font-size:0.94rem; color:#dcebf7;">
+            <div>
+              <h4 style="color:var(--gold-bright); font-family:'Cinzel',serif; margin-bottom:6px;">EDUCATION & HONOURS</h4>
+              <p>• <strong>VIT Bhopal University</strong> — B.Tech CSE (Gaming Tech) | <strong>CGPA: 9.83/10</strong></p>
+              <p>• <strong>District Topper</strong> — Damoh District, MP</p>
+              <h4 style="color:var(--gold-bright); font-family:'Cinzel',serif; margin:12px 0 6px;">EXPERIENCE</h4>
+              <p>• <strong>AI Intern</strong> — Microsoft Initiative with Edunet Foundation & AICTE (Apr–May 2025)</p>
+            </div>
+            <div>
+              <h4 style="color:var(--jade); font-family:'Cinzel',serif; margin-bottom:6px;">CORE ARSENAL</h4>
+              <p>• <strong>Code:</strong> C++, Python, Java, C#, JavaScript</p>
+              <p>• <strong>Game/XR:</strong> Unity 6 HDRP, Vuforia, Level Design</p>
+              <p>• <strong>Web/AI:</strong> React, Node, MongoDB, PostgreSQL, GenAI, RAG, FAISS, AWS, Docker</p>
+            </div>
+          </div>
+          <div class="stele-btn-row" style="margin-top:18px;">
+            <button class="jade-3d-btn" onclick="window.download3DResume()">⬇ DOWNLOAD RESUME SCROLL (.TXT)</button>
+            <button class="jade-3d-btn secondary" onclick="window.flyToRealm('ascension')">← BACK TO ASCENSION STAIRS</button>
+          </div>
+        </div>
+      `
+    });
+
+    // REALM 05 — CONTACT: CELESTIAL COMMUNICATION GATE
+    const gateGroup = new THREE.Group();
+    gateGroup.position.set(0, 90, -390);
+    xianxiaGroup.add(gateGroup);
+
+    const gatePillarGeo = new THREE.CylinderGeometry(2.2, 2.6, 52, 32);
+    const gatePillarL = new THREE.Mesh(gatePillarGeo, matImperialGold);
+    gatePillarL.position.set(-28, 26, -6);
+    const gatePillarR = gatePillarL.clone();
+    gatePillarR.position.x = 28;
+    const gateLintels = new THREE.Mesh(new THREE.BoxGeometry(68, 4.5, 6), matImperialGold);
+    gateLintels.position.set(0, 50, -6);
+    gateGroup.add(gatePillarL, gatePillarR, gateLintels);
+
+    createSpatial3DStele({
+      id: "contact_main", widthPx: 780, heightPx: 510,
+      position: new THREE.Vector3(0, 112, -388), rotationY: 0, scale: 0.034, zoomDist: 16,
+      htmlContent: `
+        <div class="spatial-stele">
+          <div class="stele-watermark">仙门</div>
+          <div class="stele-eyebrow">05 — CELESTIAL COMMUNICATION GATE</div>
+          <h2 class="stele-title" style="font-size:2.15rem;">SEEK THE NEXT DESTINATION</h2>
+          <div class="stele-subtitle" style="font-size:1.2rem;">Let us create something extraordinary.</div>
+          <div style="display:grid; grid-template-columns:1fr 1.15fr; gap:22px; margin-top:16px;">
+            <div>
+              <p style="font-size:0.94rem; color:#d0e4f5; line-height:1.6; margin-bottom:14px;">
+                Transmit a spiritual missive directly across the realm or connect via the official seals below:
+              </p>
+              <div style="display:grid; gap:10px;">
+                <a class="jade-3d-btn secondary" href="mailto:shivakantkurmi@gmail.com" style="justify-content:center;">✉ EMAIL REALM</a>
+                <a class="jade-3d-btn secondary" href="https://github.com/ShivakantKurmi" target="_blank" rel="noopener" style="justify-content:center;">⚔ GITHUB FORGE ↗</a>
+                <a class="jade-3d-btn secondary" href="https://www.linkedin.com/in/shivakant-kurmi" target="_blank" rel="noopener" style="justify-content:center;">❖ LINKEDIN ALLIANCE ↗</a>
+              </div>
+            </div>
+            <form onsubmit="window.submit3DTransmission(event)">
+              <input class="celestial-input" type="text" placeholder="Your Name / Daoist Title" required />
+              <input class="celestial-input" type="email" placeholder="Your Email Address" required />
+              <textarea class="celestial-input" style="height:82px; resize:none;" placeholder="Inscribe your message..." required></textarea>
+              <button type="submit" class="jade-3d-btn" id="gate-send-btn" style="width:100%; justify-content:center;">SEND MESSAGE</button>
+            </form>
+          </div>
+        </div>
+      `
+    });
+
+    /*************************************************************************
+     * 11. 3D RAYCASTER FOR CLICKING & HOVERING MOUNTAINS, DEITIES & RELICS
+     *************************************************************************/
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const tooltipEl = document.getElementById('world-hover-tooltip');
+    const tooltipTitle = document.getElementById('tooltip-title');
+    const tooltipAction = document.getElementById('tooltip-action');
+    let pointerDownPos = { x: 0, y: 0 };
+
+    window.addEventListener('pointerdown', (e) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(clickableWorldMeshes, false);
+      if (hits.length > 0 && hits[0].object.userData.clickable) {
+        const data = hits[0].object.userData;
+        tooltipTitle.textContent = data.title;
+        tooltipAction.textContent = data.subtitle;
+        tooltipEl.style.left = `${e.clientX}px`;
+        tooltipEl.style.top = `${e.clientY}px`;
+        tooltipEl.classList.add('visible');
+        document.body.style.cursor = 'pointer';
+      } else {
+        tooltipEl.classList.remove('visible');
+        document.body.style.cursor = 'default';
+      }
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (moveDist > 6) return;
+      if (e.target.closest('.spatial-stele, .talisman-slip, .cyber-3d-terminal, #diegetic-3d-hud, .world-beacon-tag')) return;
+
+      pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(clickableWorldMeshes, false);
+      if (hits.length > 0 && hits[0].object.userData.onClick) {
+        hits[0].object.userData.onClick();
+      }
+    });
+
+    /*************************************************************************
+     * 12. SPIRITUAL QI PARTICLES & CAMERA FLIGHT WAYPOINTS
+     *************************************************************************/
+    const pCount = 2400;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(pCount * 3);
+    for (let i = 0; i < pCount; i++) {
+      pPos[i * 3]     = (Math.random() - 0.5) * 520;
+      pPos[i * 3 + 1] = -10 + Math.random() * 180;
+      pPos[i * 3 + 2] = 380 - Math.random() * 880;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    const qiParticles = new THREE.Points(
+      pGeo,
+      new THREE.PointsMaterial({ color: 0xffe699, size: 0.95, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
+    );
+    scene.add(qiParticles);
+
+    const REALM_WAYPOINTS = {
+      hero: {
+        steleId: "hero_main",
+        cam: new THREE.Vector3(6, 14, 48),
+        target: new THREE.Vector3(7, 13, 25),
+        cultivatorPos: new THREE.Vector3(-4, 2.8, 30),
+        readout: "REALM: 00 IMMORTAL SANCTUARY • CLICK ANY DEITY IN THE TOP BAR OR 3D SCENE TO ZOOM IN"
+      },
+      origin: {
+        steleId: "origin_main",
+        cam: new THREE.Vector3(0, 30, -52),
+        target: new THREE.Vector3(0, 29, -85),
+        cultivatorPos: new THREE.Vector3(0, 14.8, -66),
+        readout: "REALM: 01 ORIGIN SANCTUARY • GUARDED BY THE ANCIENT ROYAL GOD"
+      },
+      cultivation: {
+        steleId: "cultivation_main",
+        cam: new THREE.Vector3(125, 39, -2),
+        target: new THREE.Vector3(125, 38, -46),
+        cultivatorPos: new THREE.Vector3(125, 25, -24),
+        readout: "REALM: 02 CULTIVATION FORMATION • GUARDED BY THE THUNDER IMMORTAL"
+      },
+      artifacts: {
+        steleId: "artifact_0",
+        cam: new THREE.Vector3(-135, 48, 12),
+        target: new THREE.Vector3(-135, 42, -45),
+        cultivatorPos: new THREE.Vector3(-135, 29, -22),
+        readout: "REALM: 03 IMMORTAL ARTIFACT VAULT • GUARDED BY THE ANCIENT DEMON SOVEREIGN"
+      },
+      nexion: {
+        steleId: "nexion_main",
+        cam: new THREE.Vector3(0, 24, 342),
+        target: new THREE.Vector3(0, 23, 305),
+        cultivatorPos: new THREE.Vector3(0, 4, 325),
+        readout: "SPECIAL REALM: NEX//ION CYBERPUNK DIMENSION • CLICK ANY SYSTEM TERMINAL TO ZOOM"
+      },
+      ascension: {
+        steleId: "ascension_main",
+        cam: new THREE.Vector3(0, 77, -182),
+        target: new THREE.Vector3(0, 76, -222),
+        cultivatorPos: new THREE.Vector3(0, 62, -198),
+        readout: "REALM: 04 ASCENSION STAIRCASE & CELESTIAL RECORDS"
+      },
+      dao_scroll: {
+        steleId: "dao_scroll_main",
+        cam: new THREE.Vector3(0, 98, -216),
+        target: new THREE.Vector3(0, 98, -245),
+        cultivatorPos: new THREE.Vector3(0, 82, -228),
+        readout: "ANCIENT JADE SCROLL: DAO OF THE DEVELOPER (3D RESUME STELE)"
+      },
+      contact: {
+        steleId: "contact_main",
+        cam: new THREE.Vector3(0, 112, -356),
+        target: new THREE.Vector3(0, 112, -388),
+        cultivatorPos: new THREE.Vector3(0, 91, -365),
+        readout: "REALM: 05 CELESTIAL COMMUNICATION GATE • VOID SOVEREIGN IN LOTUS MEDITATION"
+      }
+    };
+
+    let currentRealmKey = 'hero';
+
+    window.flyToRealm = function(realmKey) {
+      const wp = REALM_WAYPOINTS[realmKey];
+      if (!wp) return;
+      currentRealmKey = realmKey;
+
+      document.querySelectorAll('.realm-rune-stone').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.realm === realmKey);
+      });
+      document.getElementById('hud-stance-readout').textContent = wp.readout;
+
+      sanctuaryGoldLight.position.set(wp.target.x, wp.target.y + 12, wp.target.z + 18);
+
+      gsap.to(camera.position, {
+        x: wp.cam.x, y: wp.cam.y, z: wp.cam.z, duration: 1.9, ease: "power3.inOut"
+      });
+      gsap.to(controls.target, {
+        x: wp.target.x, y: wp.target.y, z: wp.target.z, duration: 1.9, ease: "power3.inOut"
+      });
+      gsap.to(cultivator.position, {
+        x: wp.cultivatorPos.x, y: wp.cultivatorPos.y, z: wp.cultivatorPos.z, duration: 1.7, ease: "power2.inOut"
+      });
+
+      playQiNote(realmKey === 'nexion' ? 784 : 432);
+    };
+
+    window.focusActiveRealmCloseUp = function() {
+      const wp = REALM_WAYPOINTS[currentRealmKey];
+      if (wp && steleRegistryById[wp.steleId]) {
+        const reg = steleRegistryById[wp.steleId];
+        window.zoomTo3DNode(reg.group, reg.zoomDist);
+      }
+    };
+
+    window.resetCurrentRealmView = function() {
+      window.flyToRealm(currentRealmKey);
+    };
+
+    /*************************************************************************
+     * 13. PROCEDURAL GUQIN & SPIRITUAL WIND AUDIO SYNTHESIZER
+     *************************************************************************/
+    let audioCtx = null, soundOn = false, droneGain = null;
+
+    window.toggleQiSound = function() {
+      const btn = document.getElementById('qi-audio-btn');
+      if (!soundOn) {
+        if (!audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AC();
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          droneGain = audioCtx.createGain();
+          osc1.type = 'sine'; osc1.frequency.value = 73.42;
+          osc2.type = 'triangle'; osc2.frequency.value = 110.0;
+          const filt = audioCtx.createBiquadFilter();
+          filt.type = 'lowpass'; filt.frequency.value = 220;
+          droneGain.gain.value = 0.06;
+          osc1.connect(filt); osc2.connect(filt);
+          filt.connect(droneGain); droneGain.connect(audioCtx.destination);
+          osc1.start(); osc2.start();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        gsap.to(droneGain.gain, { value: 0.07, duration: 0.8 });
+        soundOn = true;
+        btn.textContent = '🔊 QI SOUND ON';
+        playQiNote(528);
+      } else {
+        if (droneGain) gsap.to(droneGain.gain, { value: 0.0001, duration: 0.5 });
+        soundOn = false;
+        btn.textContent = '🔇 QI SOUND';
+      }
+    };
+
+    function playQiNote(freq = 528) {
+      if (!soundOn || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      g.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.5);
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 1.55);
+    }
+
+    window.download3DResume = function() {
+      const content = `SHIVAKANT KURMI — DAO OF THE DEVELOPER (RESUME)
+Computer Science Engineer (Gaming Technology) | VIT Bhopal University (CGPA: 9.83/10)
+District Topper — Damoh District | 900+ DSA Problems Solved
+Experience: AI Intern — Microsoft Initiative with Edunet Foundation & AICTE (Apr–May 2025)
+Projects: NEX//ION (Unity 6 HDRP), EduMentor AI, My-Campus, CloudFlow, AI Expense Tracker, Fix-It-Now
+Portfolio: https://portfolio-two-swart-35.vercel.app/`;
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Shivakant_Kurmi_Dao_Scroll_Resume.txt';
+      a.click();
+      playQiNote(660);
+    };
+
+    window.submit3DTransmission = function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('gate-send-btn');
+      btn.textContent = '✦ SPIRITUAL TALISMAN TRANSMITTED ✦';
+      playQiNote(880);
+      setTimeout(() => {
+        e.target.reset();
+        btn.textContent = 'SEND MESSAGE';
+      }, 3200);
+    };
+
+    /*************************************************************************
+     * 14. MASTER RENDER LOOP (SYNCHRONIZED WEBGL COMPOSER + CSS3DRENDERER)
+     *************************************************************************/
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      cloudSeaUniforms.uTime.value = t;
+      customShaderUniformsList.forEach(u => { u.uTime.value = t; });
+
+      // Animate Rising Immortal Spirit Rings & Spiraling Dragon-Qi Ribbons on Every Statue
+      risingAuraRings.forEach((ar, idx) => {
+        ar.auraSpiralGroup.rotation.y = t * 0.85 * (idx % 2 === 0 ? 1 : -1);
+        ar.ring1.position.y = ((t * 1.6 + idx) % 5.5);
+        ar.ring2.position.y = ((t * 1.6 + idx + 2.75) % 5.5);
+        const s1 = 1.0 + Math.sin((ar.ring1.position.y / 5.5) * Math.PI) * 0.35;
+        ar.ring1.scale.setScalar(s1);
+      });
+
+      nineSwordsGroup.rotation.z = t * 0.45;
+      thunderDrumsGroup.rotation.z = -t * 0.25;
+      armillaryRing1.rotation.y = t * 0.35;
+      armillaryRing2.rotation.z = -t * 0.28;
+
+      // Update Live 3D Jagged Lightning Arcs on Thunder Immortal
+      lightningLines.forEach(item => {
+        const mid = new THREE.Vector3(
+          (item.start.x + 1.3) * 0.5 + (Math.random() - 0.5) * 0.95,
+          (item.start.y + 2.8) * 0.5 + (Math.random() - 0.5) * 0.95,
+          (Math.random() - 0.5) * 0.85
+        );
+        item.line.geometry.setFromPoints([item.start, mid, new THREE.Vector3(1.3, 2.8, 0.5)]);
+      });
+
+      floatingPeaks.forEach(p => {
+        p.group.position.y = p.baseY + Math.sin(t * 0.65 + p.phase) * 0.6;
+      });
+
+      immortalDeityAnimations.forEach((d, i) => {
+        d.halo.rotation.z = t * 0.22 * (i % 2 === 0 ? 1 : -1);
+        d.deityGroup.position.y = d.baseY + Math.sin(t * 1.1 + i) * 0.45;
+      });
+
+      spatialSteleObjects.forEach((st, i) => {
+        if (st.haloMesh) st.haloMesh.rotation.z = t * 0.2 * (i % 2 === 0 ? 1 : -1);
+        st.containerGroup.position.y = st.basePosY + Math.sin(t * 1.1 + i) * 0.18;
+      });
+
+      artifactRelicMeshes.forEach((a, i) => {
+        a.relicMesh.rotation.y = t * 0.8 + i;
+        a.relicMesh.rotation.x = t * 0.45;
+      });
+      nexionCoreMesh.rotation.y = t * 0.55;
+      nexionCoreMesh.rotation.z = t * 0.3;
+
+      const posArr = qiParticles.geometry.attributes.position.array;
+      for (let i = 1; i < posArr.length; i += 3) {
+        posArr[i] += 0.07;
+        if (posArr[i] > 170) posArr[i] = -10;
+      }
+      qiParticles.geometry.attributes.position.needsUpdate = true;
+
+      controls.update();
+      composer.render();
+      css3dRenderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+      css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    setTimeout(() => {
+      document.getElementById('celestial-loader').classList.add('vanish');
+      animate();
+    }, 600);
+  </script>
+</body>
+</html>

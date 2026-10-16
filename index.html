@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shivakant Kurmi — 3D Spatial Developer & Game Engineer Portfolio</title>
+  <meta name="description" content="Official 3D portfolio of Shivakant Kurmi. B.Tech CSE (Gaming Technology) from VIT Bhopal. Full-stack developer, game programmer, and AI systems builder." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- GSAP Engine (Local script: runs with 0 CORS & 0 Tracking Prevention issues on file:///) -->
+  <script src="./js/gsap.min.js"></script>
+
+  <!-- Portfolio Data & Engine (Standard Scripts: runs cleanly on local file:/// protocol) -->
+  <script src="./js/data.js"></script>
+  <script src="./js/main.js"></script>
+
+  <!-- Three.js r160 ES Module Bridge (Inline Module runs with zero CORS issues) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+
+    window.THREE = THREE;
+    window.OrbitControls = OrbitControls;
+    window.EffectComposer = EffectComposer;
+    window.RenderPass = RenderPass;
+    window.UnrealBloomPass = UnrealBloomPass;
+    window.CSS3DRenderer = CSS3DRenderer;
+    window.CSS3DObject = CSS3DObject;
+
+    if (window.initPortfolioApp) {
+      window.initPortfolioApp();
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 1. LOADING SCREEN -->
+  <div id="celestial-loader">
+    <div class="loader-spinner">
+      <div class="loader-inner-core"></div>
+    </div>
+    <div class="loader-text">INITIALIZING 3D SPATIAL DEVELOPER UNIVERSE</div>
+    <div class="loader-sub">WEBGL SHADERS • 12 FEATURED PROJECTS • 23 CORE TECHNOLOGIES</div>
+  </div>
+
+  <!-- 2. RAYCAST HOVER TOOLTIP -->
+  <div id="world-hover-tooltip">
+    FEATURED ARSENAL
+    <span>CLICK TO INSPECT IN 3D</span>
+  </div>
+
+  <!-- 3. LAYER 1: HIGH-DPI WEBGL RENDERER CANVAS -->
+  <div id="webgl-container"></div>
+
+  <!-- 4. LAYER 2: SYNCHRONIZED 3D SPATIAL UI RENDERER (CSS3DRenderer) -->
+  <div id="css3d-container"></div>
+
+  <!-- 5. DIEGETIC 3D HUD, ZOOM CONTROLS & LIGHTING STUDIO -->
+  <div id="diegetic-3d-hud">
+    <!-- Top Navigation Header -->
+    <header class="hud-top-bar">
+      <div class="hud-brand" onclick="window.flyToSection('home')">
+        <div class="hud-logo-icon">SK</div>
+        <div>
+          <div class="hud-brand-name">SHIVAKANT KURMI</div>
+        </div>
+      </div>
+      <div class="hud-status-text" id="hud-status-readout">
+        HOME • SHIVAKANT KURMI PORTFOLIO • DRAG TO ORBIT 3D WORLD • SCROLL TO ZOOM
+      </div>
+      <div class="hud-top-actions">
+        <button class="hud-btn" id="btn-lighting-studio" onclick="window.toggleLightingStudio()">
+          ☀ LIGHTING
+        </button>
+        <a class="hud-btn" href="Shivakant_Kurmi_Resume.pdf" download="Shivakant_Kurmi_Resume.pdf" target="_blank">
+          📄 RESUME PDF
+        </a>
+        <a class="hud-btn" href="https://github.com/shivakantkurmi" target="_blank" rel="noopener">
+          🐙 GITHUB
+        </a>
+        <a class="hud-btn" href="https://www.linkedin.com/in/shivakant-kurmi-15339428a" target="_blank" rel="noopener">
+          💼 LINKEDIN
+        </a>
+        <button class="hud-btn" id="sound-toggle-btn" onclick="window.toggleSound()">
+          🔇 SOUND
+        </button>
+      </div>
+    </header>
+
+    <!-- Left Optical Zoom Controls -->
+    <div class="hud-zoom-controls">
+      <button class="zoom-btn" title="Zoom In" onclick="window.stepZoom(-14)">＋</button>
+      <button class="zoom-btn" title="Zoom Out" onclick="window.stepZoom(18)">－</button>
+    </div>
+
+    <!-- Celestial Lighting Studio Drawer -->
+    <aside id="lighting-studio-panel">
+      <div class="studio-header">
+        <span class="studio-title">☀ CELESTIAL LIGHTING ARRAY</span>
+        <button class="hud-btn" style="padding:2px 8px;" onclick="window.toggleLightingStudio()">✕</button>
+      </div>
+      <div class="preset-grid">
+        <button class="preset-chip active" onclick="window.applyLightingPreset('moonlit', this)">🌙 MOONLIT NIGHT</button>
+        <button class="preset-chip" onclick="window.applyLightingPreset('dawn', this)">🌅 GOLDEN DAWN</button>
+        <button class="preset-chip" onclick="window.applyLightingPreset('crimson', this)">🩸 CRIMSON FLAME</button>
+        <button class="preset-chip" onclick="window.applyLightingPreset('jade', this)">🐉 JADE NIRVANA</button>
+        <button class="preset-chip" style="grid-column: span 2; border-color:var(--primary);" onclick="window.applyLightingPreset('reading', this)">📖 HIGH-CLARITY READING</button>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Moon / Sun Orbit</span><strong id="val-orbit">45°</strong></div>
+        <input type="range" class="celestial-range" id="sl-orbit" min="0" max="360" value="45" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Illumination Exposure</span><strong id="val-exposure">3.0</strong></div>
+        <input type="range" class="celestial-range" id="sl-exposure" min="0.5" max="5.0" step="0.1" value="3.0" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Spatial Bloom Glow</span><strong id="val-bloom">0.68</strong></div>
+        <input type="range" class="celestial-range" id="sl-bloom" min="0.0" max="1.8" step="0.05" value="0.68" oninput="window.updateLightingSliders()" />
+      </div>
+      <div class="slider-row">
+        <div class="slider-label"><span>Spatial Lamp Intensity</span><strong id="val-lamps">5.4</strong></div>
+        <input type="range" class="celestial-range" id="sl-lamps" min="0.5" max="9.0" step="0.2" value="5.4" oninput="window.updateLightingSliders()" />
+      </div>
+    </aside>
+
+    <!-- Bottom Navigation Dock -->
+    <nav class="hud-bottom-dock" aria-label="Portfolio Sections">
+      <button class="nav-stone-btn active" data-section="home" onclick="window.flyToSection('home')">
+        <span class="n-title">HOME</span>
+        <span class="n-sub">Intro</span>
+      </button>
+      <button class="nav-stone-btn" data-section="about" onclick="window.flyToSection('about')">
+        <span class="n-title">ABOUT</span>
+        <span class="n-sub">Profile</span>
+      </button>
+      <button class="nav-stone-btn" data-section="skills" onclick="window.flyToSection('skills')">
+        <span class="n-title">SKILLS</span>
+        <span class="n-sub">23 Tech</span>
+      </button>
+      <button class="nav-stone-btn" data-section="projects" onclick="window.flyToSection('projects')">
+        <span class="n-title">PROJECTS</span>
+        <span class="n-sub">12 Repos</span>
+      </button>
+      <button class="nav-stone-btn" data-section="experience" onclick="window.flyToSection('experience')">
+        <span class="n-title">TIMELINE</span>
+        <span class="n-sub">Experience</span>
+      </button>
+      <button class="nav-stone-btn" data-section="resume" onclick="window.flyToSection('resume')">
+        <span class="n-title">RESUME</span>
+        <span class="n-sub">CV Record</span>
+      </button>
+      <button class="nav-stone-btn" data-section="contact" onclick="window.flyToSection('contact')">
+        <span class="n-title">CONTACT</span>
+        <span class="n-sub">Connect</span>
+      </button>
+    </nav>
+  </div>
+
+</body>
+</html>
